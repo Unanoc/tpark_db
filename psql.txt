@@ -1,0 +1,21 @@
+
+УДАЛИТЬ БАЗУ ДАННЫХ
+psql --command "DROP DATABASE IF EXISTS forum;"
+
+УДАЛИТЬ ПОЛЬЗОВАТЕЛЯ
+psql --command "DROP USER IF EXISTS forum CASCADE;"
+
+СОЗДАТЬ ПОЛЬЗОВАТЕЛЯ
+psql --command "CREATE USER forum WITH SUPERUSER PASSWORD 'forum';"
+
+СОЗДАТЬ БАЗУ ДАННЫХ У ПОЛЬЗОВАТЕЛЯ
+createdb -O forum forum
+
+СОЗДАТЬ РАСШИРЕНИЕ citext
+psql -d forum -c "CREATE EXTENSION IF NOT EXISTS citext;"
+
+ВОЙТИ ПОД ПОЛЬЗОВАТЕЛЕМ
+psql forum
+
+ЗАПУСТИТЬ .sql СКРИПТ ДЛЯ БАЗЫ ДАННЫХ forum
+psql forum -f sql/create_tables.sql
