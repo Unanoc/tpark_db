@@ -59,8 +59,6 @@ CREATE TABLE IF NOT EXISTS votes (
 );
 
 
-
-
 -- INDEX on users "nickname"
 CREATE INDEX IF NOT EXISTS index_on_users_nickname
   ON users ("nickname");
