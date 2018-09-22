@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
+	"tpark_db/router"
 
-	"github.com/Unanoc/tpark_db/router"
 	"github.com/valyala/fasthttp"
 )
 
@@ -14,6 +14,7 @@ const (
 func main() {
 	log.Printf("Server started: http://localhost:5000/")
 
+	router.Init()
 	if err := fasthttp.ListenAndServe(port, router.Router.Handler); err != nil {
 		log.Fatalf("Error in server: %s", err)
 	}
