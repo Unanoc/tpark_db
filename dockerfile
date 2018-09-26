@@ -15,3 +15,7 @@ RUN /etc/init.d/postgresql start &&\
     createdb -O forum forum &&\
     psql -d forum -c "CREATE EXTENSION IF NOT EXISTS citext;" &&\
     /etc/init.d/postgresql stop
+
+
+# для использования go mod нужно скачать след утилиты
+# RUN apk add --update git gcc musl-dev && GO11MODULE=on go build
