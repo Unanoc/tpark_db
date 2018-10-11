@@ -19,3 +19,5 @@ RUN /etc/init.d/postgresql start &&\
 
 # для использования go mod нужно скачать след утилиты
 # RUN apk add --update git gcc musl-dev && GO11MODULE=on go build
+
+# go build .
