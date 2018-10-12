@@ -2,11 +2,14 @@ package main
 
 import (
 	"log"
-	"net/http"
+	
+	"github.com/valyala/fasthttp"
+
 	"tpark_db/router"
+	"tpark_db/logger"
 )
 
 func main() {	
 	router := router.NewRouter()
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(fasthttp.ListenAndServe(":5000", logger.Logger(router.Handler)))
 }

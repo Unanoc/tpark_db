@@ -1,90 +1,73 @@
 package api
 
 import (
-	"net/http"
+	"github.com/valyala/fasthttp"
 )
 
-func ClearHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ClearHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ForumCreateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ForumGetOneHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ForumGetOneHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ForumGetThreadsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ForumGetUsersHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ForumGetUsersHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func PostGetOneHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func PostGetOneHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func PostUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func PostUpdateHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func PostsCreateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func PostsCreateHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func StatusHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func StatusHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ThreadCreateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ThreadGetOneHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ThreadGetOneHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ThreadGetPosts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ThreadGetPosts(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ThreadUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ThreadUpdateHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func ThreadVoteHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func ThreadVoteHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func UserCreateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func UserCreateHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func UserGetOneHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func UserGetOneHandler(ctx *fasthttp.RequestCtx) {
+
 }
 
-func UserUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func UserUpdateHandler(ctx *fasthttp.RequestCtx) {
+
 }
