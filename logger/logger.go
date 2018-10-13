@@ -1,9 +1,8 @@
 package logger
 
 import (
-
-	"time"
 	"log"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
