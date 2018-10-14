@@ -1,9 +1,8 @@
 package database
 
 import (
-	"fmt"
 	"io/ioutil"
-	"os"
+	"tpark_db/logger"
 
 	"github.com/jackc/pgx"
 )
@@ -33,16 +32,16 @@ func (db *Connection) Connect() error {
 	db.conn = conn
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to establish connection: %v\n", err)
+		logger.Logger.Error("err")
 		return err
 	}
 	return nil
 }
 
 func (db *Connection) Disconnect() {
-	fmt.Println("Disconnecting database")
+	logger.LoggerInfo("Disconnecting database")
 	defer db.conn.Close()
-	fmt.Println("Database has been disconnected")
+	logger.LoggerInfo("Database has been disconnected")
 }
 
 func (db *Connection) CreateDB(path string) error {
@@ -55,20 +54,6 @@ func (db *Connection) CreateDB(path string) error {
 		return err
 	}
 
-	fmt.Printf("Successfully created tables\n")
+	logger.LoggerInfo("Successfully created tables")
 	return nil
 }
-
-// func StartTransaction() (*pgx.Tx, error) {
-// 	tx, err := DBConn.conn.Begin()
-// 	if err != nil {
-// 		return tx, err
-// 	}
-// 	return tx, nil
-// }
-
-// func CommitTransaction(tx *pgx.Tx) {
-// 	if err := tx.Commit(); err != nil {
-// 		tx.Rollback()
-// 	}
-// }
