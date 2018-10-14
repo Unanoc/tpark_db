@@ -44,7 +44,7 @@ func (db *Connection) Disconnect() {
 	logger.LoggerInfo("Database has been disconnected")
 }
 
-func (db *Connection) CreateDB(path string) error {
+func (db *Connection) ExecSqlScript(path string) error {
 	schema, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err

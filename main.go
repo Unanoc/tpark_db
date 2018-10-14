@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	port = ":5001"
+	port = ":5002"
 	addr = "localhost"
 )
 
@@ -20,7 +20,7 @@ func main() {
 	if err := db.Connect(); err != nil {
 		logger.Logger.Error(err.Error())
 	}
-	if err := db.CreateDB("sql/create_tables.sql"); err != nil {
+	if err := db.ExecSqlScript("sql/create_tables.sql"); err != nil {
 		logger.Logger.Error(err.Error())
 	}
 	defer db.Disconnect()
