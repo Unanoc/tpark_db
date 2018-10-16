@@ -2,35 +2,45 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 	"tpark_db/database"
-	"tpark_db/logger"
 	"tpark_db/router"
-	"go.uber.org/zap"
+
 	"github.com/valyala/fasthttp"
 )
 
 const (
-	port = ":5002"
-	addr = "localhost"
+	port = ":5000"
 )
 
-func main() {
-	// creating a connection with DB and loading of schema
-	db := database.DBConn
-	if err := db.Connect(); err != nil {
-		logger.Logger.Error(err.Error())
-	}
-	if err := db.ExecSqlScript("sql/create_tables.sql"); err != nil {
-		logger.Logger.Error(err.Error())
-	}
-	defer db.Disconnect()
-	defer logger.Logger.Sync() // calling Sync before letting your process exit
+func loggerHandlerMiddleware(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+		start := time.Now()
+		handler(ctx)
+		log.Printf("[%s] %s, %s\n", string(ctx.Method()), ctx.URI(), time.Since(start))
+	})
+}
 
-	logger.Logger.Info("Starting server",
-		zap.String("host", addr),
-		zap.String("port", port),
-	)
-	// creating a router and starting of server
+func main() {
+	// Initializing of Database Connection
+	database.Connect()
+	defer database.Disconnect()
+
+	syscallChan := make(chan os.Signal, 1)
+	signal.Notify(syscallChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-syscallChan
+		log.Println("Shutting down...")
+		database.Disconnect()
+		os.Exit(0)
+	}()
+
+	// Initializing of Router and starting of Server
 	router := router.NewRouter()
-	log.Fatal(fasthttp.ListenAndServe(port, logger.LoggerHandler(router.Handler)))
+	log.Println("Starting server...")
+	log.Fatal(fasthttp.ListenAndServe(port, loggerHandlerMiddleware(router.Handler)))
 }

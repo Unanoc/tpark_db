@@ -28,14 +28,6 @@ Technopark@MailRu. Data Base Course. RESTful API for forum.
  * допускается использовать любой язык программирования;
  * крайне не рекомендуется использовать ORM.
 
-Контейнер будет собираться из запускаться командами вида:
-```
-docker build -t a.navrotskiy https://github.com/bozaro/tech-db-forum-server.git
-docker run -p 5000:5000 --name a.navrotskiy -t a.navrotskiy
-```
-
-В качестве отправной точки можно посмотреть на примеры реализации более простого API на различных языках программирования: https://github.com/bozaro/tech-db-hello/
-
 ## Функциональное тестирование
 Корректность API будет проверяться при помощи автоматического функционального тестирования.
 
@@ -45,14 +37,6 @@ docker run -p 5000:5000 --name a.navrotskiy -t a.navrotskiy
  * запускается Docker-контейнер;
  * запускается скрипт на Go, который будет проводить тестирование;
  * останавливается Docker-контейнер.
-
-Скомпилированные программы для тестирования можно скачать по ссылкам:
-
- * [darwin_amd64.zip](https://bozaro.github.io/tech-db-forum/darwin_amd64.zip)
- * [linux_386.zip](https://bozaro.github.io/tech-db-forum/linux_386.zip)
- * [linux_amd64.zip](https://bozaro.github.io/tech-db-forum/linux_amd64.zip)
- * [windows_386.zip](https://bozaro.github.io/tech-db-forum/windows_386.zip)
- * [windows_amd64.zip](https://bozaro.github.io/tech-db-forum/windows_amd64.zip)
 
 Для локальной сборки Go-скрипта достаточно выполнить команду:
 ```
