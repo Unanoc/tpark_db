@@ -25,21 +25,21 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 	switch err {
 	case nil:
 		ctx.SetStatusCode(201)
-		jsonContent, err := json.Marshal(result)
+		buf, err := json.Marshal(result)
 		if err != nil {
 			log.Println(err)
 		}
-		ctx.Write(jsonContent)
+		ctx.Write(buf)
 	case errors.UserNotFound:
 		ctx.SetStatusCode(404)
 		ctx.Write([]byte(err.Error()))
 	case errors.ForumIsExist:
 		ctx.SetStatusCode(409)
-		jsonContent, err := json.Marshal(result)
+		buf, err := json.Marshal(result)
 		if err != nil {
 			log.Println(err)
 		}
-		ctx.Write(jsonContent)
+		ctx.Write(buf)
 	}
 }
 

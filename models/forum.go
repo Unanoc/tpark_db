@@ -25,7 +25,8 @@ func (f *Forum) CreateForum() (*Forum, error) {
 
 	isForumExist := Forum{}
 	if err := tx.QueryRow(`
-		SELECT "title", "user", "slug", "posts", "threads"
+		SELECT "title", "user", "slug", "posts", "threads" 
+		FROM forum
 		WHERE "slug" = $1 AND "user" = $2 AND "title" = $3`,
 		f.Slug, f.User, f.Title).Scan(&isForumExist.Posts,
 		&isForumExist.Slug, &isForumExist.Threads,
@@ -36,7 +37,7 @@ func (f *Forum) CreateForum() (*Forum, error) {
 	rows := tx.QueryRow(`
 		INSERT
 		INTO forums ("slug", "title", "user")
-		VALUES ($1, $2, (SELECT nickname FROM users WHERE nickname = $3)) // tck
+		VALUES ($1, $2, (SELECT nickname FROM users WHERE nickname = $3)) 
 		RETURNING "user"`,
 		f.Slug, f.Title, f.User)
 	if err := rows.Scan(&f.User); err != nil {

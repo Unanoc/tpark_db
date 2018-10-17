@@ -33,7 +33,7 @@ func main() {
 	signal.Notify(syscallChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		<-syscallChan
+		<-syscallChan // goroutine will be frozed at here cause it will be wating until signal is received.
 		log.Println("Shutting down...")
 		database.Disconnect()
 		os.Exit(0)

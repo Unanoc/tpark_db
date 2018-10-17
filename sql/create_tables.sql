@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   "nickname" CITEXT UNIQUE PRIMARY KEY,
   "email"    CITEXT UNIQUE NOT NULL,
   "fullname" CITEXT NOT NULL,
-  "about"    TEXT
+  "about"    TEXT   NOT NULL
 );
 
 -- TABLE "forums" --
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS threads (
   "id"      SERIAL4 UNIQUE PRIMARY KEY,
   "author"  CITEXT NOT NULL,
   "created" TIMESTAMPTZ(3) DEFAULT now(),
-  "forum"   CITEXT,
+  "forum"   CITEXT UNIQUE NOT NULL,
   "message" TEXT,
   "slug"    CITEXT,
   "title"   TEXT,
