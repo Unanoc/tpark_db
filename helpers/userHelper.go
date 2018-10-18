@@ -69,10 +69,28 @@ func UserGetOneHelper(username string) (models.User, error) {
 	return user, nil
 }
 
-func UserUpdateHelper(user *models.User) (*models.User, error) {
+func UserUpdateHelper(user *models.User) error {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
-	// TODO
+
+	if err := tx.QueryRow(`
+		UPDATE users
+		SET 
+			"fullname" = $2,
+			"about" = $3,
+			"email" = $4
+		WHERE "nickname" = $1
+		RETURNING "fullname", "about", "email"`,
+		&user.Nickname, &user.Fullname, &user.About, &user.Email).Scan(&user.Fullname, &user.About, &user.Email); err != nil {
+		sError := err.Error()
+		if sError[len(sError)-2] == '5' { // determinatingn an error by last number of error msg: "duplicate key value violates unique constraint "users_email_key" (SQLSTATE 23505)". It is bad code...  like API
+			log.Println(err)
+			return errors.UserUpdateConflict
+		}
+		log.Println(err)
+		return errors.UserNotFound
+	}
+
 	database.CommitTransaction(tx)
-	return user, nil
+	return nil
 }

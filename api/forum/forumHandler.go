@@ -41,6 +41,11 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 			log.Println(err)
 		}
 		ctx.Write(buf)
+	default:
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
+		errMsg := err.Error()
+		log.Println(err)
+		ctx.SetBody([]byte(errMsg))
 	}
 }
 
