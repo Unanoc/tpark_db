@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"tpark_db/errors"
+	"tpark_db/helpers"
 	"tpark_db/models"
 
 	"github.com/valyala/fasthttp"
@@ -21,20 +22,20 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	result, err := forum.CreateForum()
+	result, err := helpers.ForumCreateHelper(&forum)
 	switch err {
 	case nil:
-		ctx.SetStatusCode(201)
+		ctx.SetStatusCode(fasthttp.StatusCreated) // 201
 		buf, err := json.Marshal(result)
 		if err != nil {
 			log.Println(err)
 		}
 		ctx.Write(buf)
 	case errors.UserNotFound:
-		ctx.SetStatusCode(404)
+		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
 		ctx.Write([]byte(err.Error()))
 	case errors.ForumIsExist:
-		ctx.SetStatusCode(409)
+		ctx.SetStatusCode(fasthttp.StatusConflict) // 409
 		buf, err := json.Marshal(result)
 		if err != nil {
 			log.Println(err)
