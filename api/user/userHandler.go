@@ -41,9 +41,8 @@ func UserCreateHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		errMsg := err.Error()
 		log.Println(err)
-		ctx.SetBody([]byte(errMsg))
+		ctx.SetBody([]byte(err.Error()))
 	}
 }
 
@@ -74,9 +73,8 @@ func UserGetOneHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		errMsg := err.Error()
 		log.Println(err)
-		ctx.SetBody([]byte(errMsg))
+		ctx.SetBody([]byte(err.Error()))
 	}
 }
 
@@ -121,8 +119,7 @@ func UserUpdateHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		errMsg := err.Error()
 		log.Println(err)
-		ctx.SetBody([]byte(errMsg))
+		ctx.SetBody([]byte(err.Error()))
 	}
 }

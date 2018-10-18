@@ -2,6 +2,7 @@ package forum
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"tpark_db/errors"
 	"tpark_db/helpers"
@@ -30,10 +31,18 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 		if err != nil {
 			log.Println(err)
 		}
-		ctx.Write(buf)
+		ctx.SetBody(buf)
 	case errors.UserNotFound:
 		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
-		ctx.Write([]byte(err.Error()))
+
+		errorResp := errors.Error{
+			Message: fmt.Sprintf("Can't find user with nickname: %s", forum.User)}
+
+		buf, err := json.Marshal(errorResp)
+		if err != nil {
+			log.Println(err)
+		}
+		ctx.SetBody(buf)
 	case errors.ForumIsExist:
 		ctx.SetStatusCode(fasthttp.StatusConflict) // 409
 		buf, err := json.Marshal(result)
@@ -43,9 +52,8 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 		ctx.Write(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		errMsg := err.Error()
 		log.Println(err)
-		ctx.SetBody([]byte(errMsg))
+		ctx.SetBody([]byte(err.Error()))
 	}
 }
 

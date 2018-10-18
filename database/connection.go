@@ -21,7 +21,6 @@ var pgxConfig = pgx.ConnConfig{
 }
 
 const dataBaseSchema = "./sql/create_tables.sql"
-const removeDataBase = "./sql/drop_tables.sql"
 
 func Connect() {
 	var err error
@@ -32,13 +31,6 @@ func Connect() {
 		}); err != nil {
 		log.Fatalln(err) // Fatalln is equivalent to Println() followed by a call to os.Exit(1)
 	}
-
-	// debug
-	if err = dropTablesIfExist(); err != nil {
-		log.Println(err)
-	}
-	log.Println("SQL Schema was dropped successfully")
-	//
 
 	if err = createTables(); err != nil {
 		log.Println(err)
@@ -58,29 +50,6 @@ func createTables() error {
 	}
 
 	content, err := ioutil.ReadFile(dataBaseSchema)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	if _, err := tx.Exec(string(content)); err != nil {
-		log.Println(err)
-		tx.Rollback()
-		return err
-	}
-
-	tx.Commit()
-	return nil
-}
-
-func dropTablesIfExist() error {
-	tx, err := db.Begin()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	content, err := ioutil.ReadFile(removeDataBase)
 	if err != nil {
 		log.Println(err)
 		return err

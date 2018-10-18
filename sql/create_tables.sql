@@ -1,9 +1,9 @@
-DROP TABLE IF EXISTS "errors";
-DROP TABLE IF EXISTS "users";
-DROP TABLE IF EXISTS "forums";
-DROP TABLE IF EXISTS "threads";
-DROP TABLE IF EXISTS "posts";
-DROP TABLE IF EXISTS "votes";
+DROP TABLE IF EXISTS "errors" CASCADE;
+DROP TABLE IF EXISTS "users" CASCADE;
+DROP TABLE IF EXISTS "forums" CASCADE;
+DROP TABLE IF EXISTS "threads" CASCADE;
+DROP TABLE IF EXISTS "posts" CASCADE;
+DROP TABLE IF EXISTS "votes" CASCADE;
 
 -- TABLE "errors" --
 CREATE TABLE IF NOT EXISTS errors (
@@ -20,23 +20,23 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- TABLE "forums" --
 CREATE TABLE IF NOT EXISTS forums (
-  "posts"   BIGINT DEFAULT 0,
-  "slug"    CITEXT UNIQUE NOT NULL,
+  "posts"   BIGINT  DEFAULT 0,
+  "slug"    CITEXT  UNIQUE NOT NULL,
   "threads" INTEGER DEFAULT 0,
-  "title"   TEXT,
-  "user"    CITEXT NOT NULL 
+  "title"   TEXT    NOT NULL,
+  "user"    CITEXT  NOT NULL REFERENCES users ("nickname")
 );
 
 -- TABLE "threads" --
 CREATE TABLE IF NOT EXISTS threads (
-  "id"      SERIAL4 UNIQUE PRIMARY KEY,
-  "author"  CITEXT NOT NULL,
+  "id"      SERIAL4        UNIQUE PRIMARY KEY,
+  "author"  CITEXT         NOT NULL,
   "created" TIMESTAMPTZ(3) DEFAULT now(),
-  "forum"   CITEXT UNIQUE NOT NULL,
-  "message" TEXT,
+  "forum"   CITEXT         UNIQUE NOT NULL,
+  "message" TEXT           NOT NULL,
   "slug"    CITEXT,
-  "title"   TEXT,
-  "votes"   INTEGER DEFAULT 0
+  "title"   TEXT           NOT NULL,
+  "votes"   INTEGER        DEFAULT 0
 );
 
 -- TABLE "posts" --
