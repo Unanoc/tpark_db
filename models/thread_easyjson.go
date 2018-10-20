@@ -198,7 +198,7 @@ func easyjson2d00218DecodeTparkDbModels2(in *jlexer.Lexer, out *Thread) {
 		}
 		switch key {
 		case "id":
-			out.Id = float32(in.Float32())
+			out.Id = int(in.Int())
 		case "title":
 			out.Title = string(in.String())
 		case "author":
@@ -208,7 +208,7 @@ func easyjson2d00218DecodeTparkDbModels2(in *jlexer.Lexer, out *Thread) {
 		case "message":
 			out.Message = string(in.String())
 		case "votes":
-			out.Votes = float32(in.Float32())
+			out.Votes = int(in.Int())
 		case "slug":
 			out.Slug = string(in.String())
 		case "created":
@@ -237,7 +237,7 @@ func easyjson2d00218EncodeTparkDbModels2(out *jwriter.Writer, in Thread) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Id))
+		out.Int(int(in.Id))
 	}
 	{
 		const prefix string = ",\"title\":"
@@ -287,7 +287,7 @@ func easyjson2d00218EncodeTparkDbModels2(out *jwriter.Writer, in Thread) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Votes))
+		out.Int(int(in.Votes))
 	}
 	if in.Slug != "" {
 		const prefix string = ",\"slug\":"

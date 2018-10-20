@@ -25,6 +25,7 @@ func New(msg string) error {
 var ForumIsExist = New("Forum was created earlier")
 var UserNotFound = New("User not found")
 var ForumNotFound = New("Forum not found")
+var ForumOrAuthorNotFound = New("Forum or Author not found")
 var ThreadIsExist = New("Thread was created earlier")
 var UserIsExist = New("User was created earlier")
 var UserUpdateConflict = New("User not updated")

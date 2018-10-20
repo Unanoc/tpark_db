@@ -6,12 +6,12 @@ import (
 
 //easyjson:json
 type Thread struct {
-	Id      float32   `json:"id,omitempty"`
+	Id      int       `json:"id,omitempty"`
 	Title   string    `json:"title"`
 	Author  string    `json:"author"`
 	Forum   string    `json:"forum,omitempty"`
 	Message string    `json:"message"`
-	Votes   float32   `json:"votes,omitempty"`
+	Votes   int       `json:"votes,omitempty"`
 	Slug    string    `json:"slug,omitempty"`
 	Created time.Time `json:"created,omitempty"`
 }

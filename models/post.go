@@ -12,7 +12,7 @@ type Post struct {
 	Message  string    `json:"message"`
 	IsEdited bool      `json:"isEdited,omitempty"`
 	Forum    string    `json:"forum,omitempty"`
-	Thread   float32   `json:"thread,omitempty"`
+	Thread   int       `json:"thread,omitempty"`
 	Created  time.Time `json:"created,omitempty"`
 }
 

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- TABLE "forums" --
-CREATE TABLE IF NOT EXISTS "forums" (
+CREATE TABLE IF NOT EXISTS forums (
   "posts"   BIGINT  DEFAULT 0,
   "slug"    CITEXT  UNIQUE NOT NULL,
   "threads" INTEGER DEFAULT 0,
@@ -29,10 +29,10 @@ CREATE TABLE IF NOT EXISTS "forums" (
 
 -- TABLE "threads" --
 CREATE TABLE IF NOT EXISTS threads (
-  "id"      SERIAL4        UNIQUE PRIMARY KEY,
-  "author"  CITEXT         NOT NULL,
+  "id"      SERIAL         UNIQUE PRIMARY KEY,
+  "author"  CITEXT         NOT NULL REFERENCES users ("nickname"),
   "created" TIMESTAMPTZ(3) DEFAULT now(),
-  "forum"   CITEXT         UNIQUE NOT NULL,
+  "forum"   CITEXT         NOT NULL REFERENCES forums ("slug"),
   "message" TEXT           NOT NULL,
   "slug"    CITEXT,
   "title"   TEXT           NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS threads (
 
 -- TABLE "posts" --
 CREATE TABLE IF NOT EXISTS posts (
-  "id"       SERIAL8 UNIQUE PRIMARY KEY,
+  "id"       SERIAL  UNIQUE PRIMARY KEY,
   "author"   CITEXT NOT NULL,
   "created"  TIMESTAMPTZ(3) DEFAULT now(),
   "forum"    CITEXT,
