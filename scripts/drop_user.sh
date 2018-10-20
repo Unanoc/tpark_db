@@ -1,3 +1,3 @@
 #!/bin/bash
 
-psql --command "DROP USER IF EXISTS forum;"
+psql --command "DROP USER IF EXISTS apiforum;"

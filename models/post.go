@@ -4,38 +4,30 @@ import (
 	"time"
 )
 
-// Сообщение внутри ветки обсуждения на форуме. 
+//easyjson:json
 type Post struct {
-	// Идентификатор данного сообщения.
-	Id float32 `json:"id,omitempty"`
-	// Идентификатор родительского сообщения (0 - корневое сообщение обсуждения). 
-	Parent float32 `json:"parent,omitempty"`
-	// Автор, написавший данное сообщение.
-	Author string `json:"author"`
-	// Собственно сообщение форума.
-	Message string `json:"message"`
-	// Истина, если данное сообщение было изменено.
-	IsEdited bool `json:"isEdited,omitempty"`
-	// Идентификатор форума (slug) данного сообещния.
-	Forum string `json:"forum,omitempty"`
-	// Идентификатор ветви (id) обсуждения данного сообещния.
-	Thread float32 `json:"thread,omitempty"`
-	// Дата создания сообщения на форуме.
-	Created time.Time `json:"created,omitempty"`
+	Id       float32   `json:"id,omitempty"`
+	Parent   float32   `json:"parent,omitempty"`
+	Author   string    `json:"author"`
+	Message  string    `json:"message"`
+	IsEdited bool      `json:"isEdited,omitempty"`
+	Forum    string    `json:"forum,omitempty"`
+	Thread   float32   `json:"thread,omitempty"`
+	Created  time.Time `json:"created,omitempty"`
 }
 
-// Полная информация о сообщении, включая связанные объекты.
+//easyjson:json
 type PostFull struct {
-	Post *Post `json:"post,omitempty"`
-	Author *User `json:"author,omitempty"`
+	Post   *Post   `json:"post,omitempty"`
+	Author *User   `json:"author,omitempty"`
 	Thread *Thread `json:"thread,omitempty"`
-	Forum *Forum `json:"forum,omitempty"`
+	Forum  *Forum  `json:"forum,omitempty"`
 }
 
-// Сообщение для обновления сообщения внутри ветки на форуме. Пустые параметры остаются без изменений.
+//easyjson:json
 type PostUpdate struct {
-	// Собственно сообщение форума.
 	Message string `json:"message,omitempty"`
 }
 
+//easyjson:json
 type Posts []*Post

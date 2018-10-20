@@ -1,3 +1,3 @@
 #!/bin/bash
 
-psql --command "CREATE USER forum WITH SUPERUSER PASSWORD 'forum';"
+psql --command "CREATE USER apiforum WITH SUPERUSER PASSWORD 'apiforum';"

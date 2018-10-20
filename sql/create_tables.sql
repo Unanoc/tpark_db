@@ -15,11 +15,11 @@ CREATE TABLE IF NOT EXISTS users (
   "nickname" CITEXT UNIQUE PRIMARY KEY,
   "email"    CITEXT UNIQUE NOT NULL,
   "fullname" CITEXT NOT NULL,
-  "about"    TEXT   NOT NULL
+  "about"    TEXT
 );
 
 -- TABLE "forums" --
-CREATE TABLE IF NOT EXISTS forums (
+CREATE TABLE IF NOT EXISTS "forums" (
   "posts"   BIGINT  DEFAULT 0,
   "slug"    CITEXT  UNIQUE NOT NULL,
   "threads" INTEGER DEFAULT 0,

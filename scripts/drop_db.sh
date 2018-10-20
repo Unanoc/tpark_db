@@ -1,3 +1,3 @@
 #!/bin/bash
 
-psql --command "DROP DATABASE IF EXISTS forum;"
+psql --command "DROP DATABASE IF EXISTS apiforum;"

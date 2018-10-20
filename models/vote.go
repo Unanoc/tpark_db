@@ -1,9 +1,7 @@
 package models
 
-// Информация о голосовании пользователя.
+//easyjson:json
 type Vote struct {
-	// Идентификатор пользователя.
-	Nickname string `json:"nickname"`
-	// Отданный голос.
-	Voice float32 `json:"voice"`
+	Nickname string  `json:"nickname"`
+	Voice    float32 `json:"voice"`
 }

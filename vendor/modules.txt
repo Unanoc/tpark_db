@@ -13,6 +13,11 @@ github.com/klauspost/compress/gzip
 github.com/klauspost/compress/zlib
 # github.com/klauspost/cpuid v0.0.0-20180405133222-e7e905edc00e
 github.com/klauspost/cpuid
+# github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
+github.com/mailru/easyjson
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
+github.com/mailru/easyjson/buffer
 # github.com/pkg/errors v0.8.0
 github.com/pkg/errors
 # github.com/valyala/bytebufferpool v1.0.0

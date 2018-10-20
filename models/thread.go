@@ -4,33 +4,23 @@ import (
 	"time"
 )
 
-// Ветка обсуждения на форуме.
+//easyjson:json
 type Thread struct {
-	// Идентификатор ветки обсуждения.
-	Id float32 `json:"id,omitempty"`
-	// Заголовок ветки обсуждения.
-	Title string `json:"title"`
-	// Пользователь, создавший данную тему.
-	Author string `json:"author"`
-	// Форум, в котором расположена данная ветка обсуждения.
-	Forum string `json:"forum,omitempty"`
-	// Описание ветки обсуждения.
-	Message string `json:"message"`
-	// Кол-во голосов непосредственно за данное сообщение форума.
-	Votes float32 `json:"votes,omitempty"`
-	// Человекопонятный URL 
-	Slug string `json:"slug,omitempty"`
-	// Дата создания ветки на форуме.
+	Id      float32   `json:"id,omitempty"`
+	Title   string    `json:"title"`
+	Author  string    `json:"author"`
+	Forum   string    `json:"forum,omitempty"`
+	Message string    `json:"message"`
+	Votes   float32   `json:"votes,omitempty"`
+	Slug    string    `json:"slug,omitempty"`
 	Created time.Time `json:"created,omitempty"`
 }
 
-// Сообщение для обновления ветки обсуждения на форуме. Пустые параметры остаются без изменений.
+//easyjson:json
 type ThreadUpdate struct {
-	// Заголовок ветки обсуждения.
-	Title string `json:"title,omitempty"`
-	// Описание ветки обсуждения.
+	Title   string `json:"title,omitempty"`
 	Message string `json:"message,omitempty"`
 }
 
+//easyjson:json
 type Threads []*Thread
-

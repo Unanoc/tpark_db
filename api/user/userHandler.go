@@ -1,7 +1,6 @@
 package user
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"tpark_db/errors"
@@ -15,10 +14,10 @@ func UserCreateHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 
 	user := models.User{}
-	err := json.Unmarshal(ctx.PostBody(), &user)
+	err := user.UnmarshalJSON(ctx.PostBody())
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest) // 400 Bad Request
-		ctx.SetBodyString(err.Error())
+		ctx.WriteString(err.Error())
 		return
 	}
 	user.Nickname = ctx.UserValue("nickname").(string) // getting value from URI (/api/user/{nickname}/profile")
@@ -27,17 +26,11 @@ func UserCreateHandler(ctx *fasthttp.RequestCtx) {
 	switch err {
 	case nil:
 		ctx.SetStatusCode(fasthttp.StatusCreated) // 201
-		buf, err := json.Marshal(user)
-		if err != nil {
-			log.Println(err)
-		}
+		buf, _ := user.MarshalJSON()
 		ctx.SetBody(buf)
 	case errors.UserIsExist:
 		ctx.SetStatusCode(fasthttp.StatusConflict) // 409
-		buf, err := json.Marshal(result)
-		if err != nil {
-			log.Println(err)
-		}
+		buf, _ := result.MarshalJSON()
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
@@ -55,25 +48,17 @@ func UserGetOneHandler(ctx *fasthttp.RequestCtx) {
 	switch err {
 	case nil:
 		ctx.SetStatusCode(fasthttp.StatusOK) // 200
-		buf, err := json.Marshal(result)
-		if err != nil {
-			log.Println(err)
-		}
+		buf, _ := result.MarshalJSON()
 		ctx.SetBody(buf)
 	case errors.UserNotFound:
 		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
-
 		errorResp := errors.Error{
-			Message: fmt.Sprintf("Can't find user with nickname: %s", nickname)}
-
-		buf, err := json.Marshal(errorResp)
-		if err != nil {
-			log.Println(err)
+			Message: fmt.Sprintf("Can't find user with nickname: %s", nickname),
 		}
+		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		log.Println(err)
 		ctx.SetBody([]byte(err.Error()))
 	}
 }
@@ -82,10 +67,10 @@ func UserUpdateHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 
 	user := models.User{}
-	err := json.Unmarshal(ctx.PostBody(), &user)
+	err := user.UnmarshalJSON(ctx.PostBody())
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest) // 400 Bad Request
-		ctx.SetBodyString(err.Error())
+		ctx.WriteString(err.Error())
 		return
 	}
 	user.Nickname = ctx.UserValue("nickname").(string)
@@ -94,32 +79,24 @@ func UserUpdateHandler(ctx *fasthttp.RequestCtx) {
 	switch err {
 	case nil:
 		ctx.SetStatusCode(fasthttp.StatusOK) // 200
-		buf, err := json.Marshal(user)
-		if err != nil {
-			log.Println(err)
-		}
+		buf, _ := user.MarshalJSON()
 		ctx.SetBody(buf)
 	case errors.UserNotFound:
 		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
-		errorResp := errors.Error{Message: fmt.Sprintf("Can't find user with nickname: %s", user.Nickname)}
-
-		buf, err := json.Marshal(errorResp)
-		if err != nil {
-			log.Println(err)
+		errorResp := errors.Error{
+			Message: fmt.Sprintf("Can't find user with nickname: %s", user.Nickname),
 		}
+		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
 	case errors.UserUpdateConflict:
 		ctx.SetStatusCode(fasthttp.StatusConflict) // 409
-
-		errorResp := errors.Error{Message: "New user profile data conflicts with existing users."}
-		buf, err := json.Marshal(errorResp)
-		if err != nil {
-			log.Println(err)
+		errorResp := errors.Error{
+			Message: "New user profile data conflicts with existing users.",
 		}
+		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		log.Println(err)
 		ctx.SetBody([]byte(err.Error()))
 	}
 }

@@ -73,7 +73,7 @@ func UserUpdateHelper(user *models.User) error {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
-	if err := tx.QueryRow(`
+	rows := tx.QueryRow(`
 		UPDATE users
 		SET 
 			fullname = coalesce(nullif($2, ''), fullname),
@@ -81,7 +81,9 @@ func UserUpdateHelper(user *models.User) error {
 			email = coalesce(nullif($4, ''), email)
 		WHERE "nickname" = $1
 		RETURNING fullname, about, email, nickname`,
-		&user.Nickname, &user.Fullname, &user.About, &user.Email).Scan(&user.Fullname, &user.About, &user.Email, &user.Nickname); err != nil {
+		&user.Nickname, &user.Fullname, &user.About, &user.Email)
+
+	if err := rows.Scan(&user.Fullname, &user.About, &user.Email, &user.Nickname); err != nil {
 		sError := err.Error()
 		if sError[len(sError)-2] == '5' { // determinatingn an error by last number of error msg: "duplicate key value violates unique constraint "users_email_key" (SQLSTATE 23505)". It is bad code...  like API
 			log.Println(err)

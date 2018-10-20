@@ -10,11 +10,11 @@ import (
 var db *pgx.ConnPool
 
 var pgxConfig = pgx.ConnConfig{
-	User:              "forum",
-	Password:          "forum",
+	User:              "apiforum",
+	Password:          "apiforum",
 	Host:              "localhost",
 	Port:              5432,
-	Database:          "forum",
+	Database:          "apiforum",
 	TLSConfig:         nil,
 	UseFallbackTLS:    false,
 	FallbackTLSConfig: nil,

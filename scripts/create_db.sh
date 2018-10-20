@@ -1,4 +1,4 @@
 #!/bin/bash
 
-createdb -O forum forum
-psql -d forum -c "CREATE EXTENSION IF NOT EXISTS citext;"
+createdb -O apiforum apiforum
+psql -d apiforum -c "CREATE EXTENSION IF NOT EXISTS citext;"

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-psql forum -f sql/erase_tables.sql
+psql apiforum -f sql/erase_tables.sql
