@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"bytes"
-	"log"
+	"fmt"
 	"tpark_db/database"
 	"tpark_db/errors"
 	"tpark_db/models"
@@ -102,7 +102,6 @@ func ForumCreateThreadHelper(t *models.Thread) error {
 func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threads, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
-
 	var queryRows *pgx.Rows
 	var err error
 
@@ -111,7 +110,7 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 			queryRows, err = tx.Query(`
 				SELECT author, created, forum, id, message, slug, title, votes
 				FROM threads
-				WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
+				WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
 				ORDER BY created DESC
 				LIMIT $3::TEXT::INTEGER`,
 				slug, since, limit)
@@ -119,7 +118,7 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 			queryRows, err = tx.Query(`
 				SELECT author, created, forum, id, message, slug, title, votes
 				FROM threads
-				WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
+				WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
 				ORDER BY created
 				LIMIT $3::TEXT::INTEGER`,
 				slug, since, limit)
@@ -156,14 +155,15 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 		if err = queryRows.Scan(&thread.Author, &thread.Created, &thread.Forum,
 			&thread.Id, &thread.Message, &thread.Slug, &thread.Title,
 			&thread.Votes); err != nil {
-			log.Panic(err)
+			fmt.Println(err)
 		}
 		threads = append(threads, &thread)
 	}
 
 	if len(threads) == 0 {
-		var forCheck int
-		if err = tx.QueryRow("SELECT 1 FROM forum WHERE slug = $1", slug).Scan(&forCheck); err != nil {
+		_, err := ForumGetBySlug(slug)
+		if err != nil {
+			fmt.Println(err)
 			return nil, errors.ForumNotFound
 		}
 	}
