@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"tpark_db/database"
 	"tpark_db/errors"
 	"tpark_db/models"
@@ -25,8 +24,7 @@ func ForumCreateHelper(f *models.Forum) (*models.Forum, error) {
 	if err := rows.Scan(&f.User); err != nil {
 		switch err.(pgx.PgError).Code {
 		case "23505":
-			forum, err := ForumGetBySlug(f.Slug)
-			fmt.Println(err)
+			forum, _ := ForumGetBySlug(f.Slug)
 			return forum, errors.ForumIsExist
 		case "23502":
 			return nil, errors.UserNotFound
@@ -46,16 +44,18 @@ func ForumGetBySlug(slug string) (*models.Forum, error) {
 	forum := models.Forum{}
 
 	err := tx.QueryRow(`
-		SELECT slug, title, "user"
+		SELECT slug, title, "user", posts, threads
 		FROM forums
 		WHERE slug = $1`,
 		slug).Scan(
 		&forum.Slug,
 		&forum.Title,
-		&forum.User)
+		&forum.User,
+		&forum.Posts,
+		&forum.Threads)
 
 	if err != nil {
-		return nil, err
+		return &forum, errors.ForumNotFound
 	}
 
 	database.CommitTransaction(tx)

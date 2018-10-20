@@ -16,7 +16,7 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 	err := forum.UnmarshalJSON(ctx.PostBody())
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest) // 400 Bad Request
-		ctx.WriteString(err.Error())
+		ctx.SetBodyString(err.Error())
 		return
 	}
 	result, err := helpers.ForumCreateHelper(&forum)
@@ -36,7 +36,7 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 	case errors.ForumIsExist:
 		ctx.SetStatusCode(fasthttp.StatusConflict) // 409
 		buf, _ := result.MarshalJSON()
-		ctx.Write(buf)
+		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
 		ctx.SetBody([]byte(err.Error()))
@@ -44,7 +44,27 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 }
 
 func ForumGetOneHandler(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
 
+	slug := ctx.UserValue("slug")
+	forum, err := helpers.ForumGetBySlug(slug.(string))
+
+	switch err {
+	case nil:
+		ctx.SetStatusCode(fasthttp.StatusOK) // 200
+		buf, _ := forum.MarshalJSON()
+		ctx.SetBody(buf)
+	case errors.ForumNotFound:
+		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
+		errorResp := errors.Error{
+			Message: fmt.Sprintf("Can't find forum with slug: %s", slug),
+		}
+		buf, _ := errorResp.MarshalJSON()
+		ctx.SetBody(buf)
+	default:
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
+		ctx.SetBody([]byte(err.Error()))
+	}
 }
 
 func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
