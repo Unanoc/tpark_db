@@ -13,11 +13,11 @@ import (
 func NewRouter() *fasthttprouter.Router {
 	router := fasthttprouter.New()
 
-	router.POST("/api/forum/:slug", forum.ForumCreateHandler)
-	router.POST("/api/forum/:slug/create", forum.ForumCreateThreadHandler)
-	router.GET("/api/forum/:slug/details", forum.ForumGetOneHandler)
-	router.GET("/api/forum/:slug/threads", forum.ForumGetThreadsHandler)
-	router.GET("/api/forum/:slug/users", forum.ForumGetUsersHandler)
+	router.POST("/api/forum/:slug", forum.ForumCreateHandler) //done
+	router.POST("/api/forum/:slug/create", forum.ForumCreateThreadHandler) //TODO доделать Helper
+	router.GET("/api/forum/:slug/details", forum.ForumGetOneHandler) //done
+	router.GET("/api/forum/:slug/threads", forum.ForumGetThreadsHandler) //done
+	router.GET("/api/forum/:slug/users", forum.ForumGetUsersHandler) //TODO
 
 	router.GET("/api/post/:id/details", post.PostGetOneHandler)
 	router.POST("/api/post/:id/details", post.PostUpdateHandler)

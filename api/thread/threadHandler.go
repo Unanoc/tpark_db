@@ -5,6 +5,7 @@ import (
 )
 
 func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
 
 }
 

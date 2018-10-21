@@ -129,5 +129,27 @@ func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
 }
 
 func ForumGetUsersHandler(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	slug := ctx.UserValue("slug").(string)
+	limit := ctx.FormValue("limit")
+	since := ctx.FormValue("since")
+	desc := ctx.FormValue("desc")
+	users, err := helpers.ForumGetUsersHelper(slug, limit, since, desc)
 
+	switch err {
+	case nil:
+		ctx.SetStatusCode(fasthttp.StatusOK) // 200
+		buf, _ := users.MarshalJSON()
+		ctx.SetBody(buf)
+	case errors.ForumNotFound:
+		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
+		errorResp := errors.Error{
+			Message: fmt.Sprintf("Can't find users"),
+		}
+		buf, _ := errorResp.MarshalJSON()
+		ctx.SetBody(buf)
+	default:
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
+		ctx.SetBody([]byte(err.Error()))
+	}
 }

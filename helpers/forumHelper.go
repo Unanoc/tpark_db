@@ -171,3 +171,75 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 	database.CommitTransaction(tx)
 	return threads, nil
 }
+
+func ForumGetUsersHelper(slug string, limit, since, desc []byte) (models.Users, error) {
+	// tx := database.StartTransaction()
+	// defer tx.Rollback()
+	// var queryRows *pgx.Rows
+	// var err error
+
+	// if since != nil {
+	// 	if bytes.Equal([]byte("true"), desc) {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT nickname, fullname, about, email
+	// 			FROM users
+	// 			WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
+	// 			ORDER BY created DESC
+	// 			LIMIT $3::TEXT::INTEGER`,
+	// 			slug, since, limit)
+	// 	} else {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT nickname, fullname, about, email
+	// 			FROM users
+	// 			WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
+	// 			ORDER BY created
+	// 			LIMIT $3::TEXT::INTEGER`,
+	// 			slug, since, limit)
+	// 	}
+	// } else {
+	// 	if bytes.Equal([]byte("true"), desc) {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT nickname, fullname, about, email
+	// 			FROM users
+	// 			WHERE forum = $1
+	// 			ORDER BY created DESC
+	// 			LIMIT $2::TEXT::INTEGER`,
+	// 			slug, limit)
+	// 	} else {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT author, created, forum, id, message, slug, title, votes
+	// 			FROM threads
+	// 			WHERE forum = $1
+	// 			ORDER BY created
+	// 			LIMIT $2::TEXT::INTEGER`,
+	// 			slug, limit)
+	// 	}
+	// }
+	// defer queryRows.Close()
+
+	// if err != nil {
+	// 	return nil, errors.UserNotFound
+	// }
+
+	// users := models.Users{}
+	// for queryRows.Next() {
+	// 	user := models.User{}
+
+	// 	if err = queryRows.Scan(&user.Nickname, &user.Fullname, &user.About,
+	// 		&user.Email); err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// 	users = append(users, &user)
+	// }
+
+	// if len(users) == 0 {
+	// 	_, err := ForumGetBySlug(slug)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		return nil, errors.UserNotFound
+	// 	}
+	// }
+
+	// database.CommitTransaction(tx)
+	// return users, nil
+}
