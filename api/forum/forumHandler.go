@@ -39,7 +39,7 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }
 
@@ -63,7 +63,7 @@ func ForumGetOneHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }
 
@@ -98,7 +98,7 @@ func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }
 
@@ -124,7 +124,7 @@ func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }
 
@@ -150,6 +150,6 @@ func ForumGetUsersHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }

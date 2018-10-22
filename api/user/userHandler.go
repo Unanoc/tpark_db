@@ -17,7 +17,7 @@ func UserCreateHandler(ctx *fasthttp.RequestCtx) {
 	err := user.UnmarshalJSON(ctx.PostBody())
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest) // 400 Bad Request
-		ctx.WriteString(err.Error())
+		ctx.SetBodyString(err.Error())
 		return
 	}
 	user.Nickname = ctx.UserValue("nickname").(string) // getting value from URI (/api/user/{nickname}/profile")
@@ -35,7 +35,7 @@ func UserCreateHandler(ctx *fasthttp.RequestCtx) {
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
 		log.Println(err)
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }
 
@@ -59,7 +59,7 @@ func UserGetOneHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }
 
@@ -70,7 +70,7 @@ func UserUpdateHandler(ctx *fasthttp.RequestCtx) {
 	err := user.UnmarshalJSON(ctx.PostBody())
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest) // 400 Bad Request
-		ctx.WriteString(err.Error())
+		ctx.SetBodyString(err.Error())
 		return
 	}
 	user.Nickname = ctx.UserValue("nickname").(string)
@@ -97,6 +97,6 @@ func UserUpdateHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBody([]byte(err.Error()))
+		ctx.SetBodyString(err.Error())
 	}
 }

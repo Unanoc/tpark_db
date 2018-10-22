@@ -5,6 +5,8 @@ import (
 	"tpark_db/database"
 	"tpark_db/errors"
 	"tpark_db/models"
+
+	"github.com/jackc/pgx"
 )
 
 func UserCreateHelper(u *models.User) (models.Users, error) {
@@ -75,21 +77,19 @@ func UserUpdateHelper(user *models.User) error {
 
 	rows := tx.QueryRow(`
 		UPDATE users
-		SET 
-			fullname = coalesce(nullif($2, ''), fullname),
-			about = coalesce(nullif($3, ''), about),
-			email = coalesce(nullif($4, ''), email)
+		SET fullname = coalesce(nullif($2, ''), fullname),
+			about    = coalesce(nullif($3, ''), about),
+			email    = coalesce(nullif($4, ''), email)
 		WHERE "nickname" = $1
 		RETURNING fullname, about, email, nickname`,
 		&user.Nickname, &user.Fullname, &user.About, &user.Email)
 
-	if err := rows.Scan(&user.Fullname, &user.About, &user.Email, &user.Nickname); err != nil {
-		sError := err.Error()
-		if sError[len(sError)-2] == '5' { // determinatingn an error by last number of error msg: "duplicate key value violates unique constraint "users_email_key" (SQLSTATE 23505)". It is bad code...  like API
-			log.Println(err)
+	err := rows.Scan(&user.Fullname, &user.About, &user.Email, &user.Nickname)
+
+	if err != nil {
+		if _, ok := err.(pgx.PgError); ok {
 			return errors.UserUpdateConflict
 		}
-		log.Println(err)
 		return errors.UserNotFound
 	}
 
