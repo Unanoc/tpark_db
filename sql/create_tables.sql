@@ -42,13 +42,14 @@ CREATE TABLE IF NOT EXISTS threads (
 -- TABLE "posts" --
 CREATE TABLE IF NOT EXISTS posts (
   "id"       SERIAL         UNIQUE PRIMARY KEY,
-  "author"   CITEXT         NOT NULL,
+  "author"   CITEXT         NOT NULL REFERENCES users ("nickname"),
   "created"  TIMESTAMPTZ(3) DEFAULT now(),
   "forum"    CITEXT         NOT NULL REFERENCES forums ("slug"),
   "isEdited" BOOLEAN        DEFAULT FALSE,
   "message"  TEXT           NOT NULL,
   "parent"   BIGINT         DEFAULT 0,
-  "thread"   INTEGER
+  "thread"   INTEGER        NOT NULL REFERENCES threads ("id"),
+  "path"     BIGINT []
 );
 
 -- TABLE "votes" --
