@@ -41,20 +41,20 @@ CREATE TABLE IF NOT EXISTS threads (
 
 -- TABLE "posts" --
 CREATE TABLE IF NOT EXISTS posts (
-  "id"       SERIAL  UNIQUE PRIMARY KEY,
-  "author"   CITEXT NOT NULL,
+  "id"       SERIAL         UNIQUE PRIMARY KEY,
+  "author"   CITEXT         NOT NULL,
   "created"  TIMESTAMPTZ(3) DEFAULT now(),
-  "forum"    CITEXT,
-  "isEdited" BOOLEAN DEFAULT FALSE,
-  "message"  TEXT NOT NULL,
-  "parent"   BIGINT DEFAULT 0,
+  "forum"    CITEXT         NOT NULL REFERENCES forums ("slug"),
+  "isEdited" BOOLEAN        DEFAULT FALSE,
+  "message"  TEXT           NOT NULL,
+  "parent"   BIGINT         DEFAULT 0,
   "thread"   INTEGER
 );
 
 -- TABLE "votes" --
 CREATE TABLE IF NOT EXISTS votes (
   "voice"    SMALLINT NOT NULL,
-  "nickname" CITEXT NOT NULL,
+  "nickname" CITEXT   NOT NULL,
   "thread"   INTEGER
 );
 

@@ -2,8 +2,8 @@ package models
 
 //easyjson:json
 type Status struct {
-	User   float32 `json:"user"`
-	Forum  float32 `json:"forum"`
-	Thread float32 `json:"thread"`
-	Post   float32 `json:"post"`
+	User   int `json:"user"`
+	Forum  int `json:"forum"`
+	Thread int `json:"thread"`
+	Post   int `json:"post"`
 }

@@ -37,13 +37,13 @@ func easyjson727fe99aDecodeTparkDbModels(in *jlexer.Lexer, out *Status) {
 		}
 		switch key {
 		case "user":
-			out.User = float32(in.Float32())
+			out.User = int(in.Int())
 		case "forum":
-			out.Forum = float32(in.Float32())
+			out.Forum = int(in.Int())
 		case "thread":
-			out.Thread = float32(in.Float32())
+			out.Thread = int(in.Int())
 		case "post":
-			out.Post = float32(in.Float32())
+			out.Post = int(in.Int())
 		default:
 			in.SkipRecursive()
 		}
@@ -66,7 +66,7 @@ func easyjson727fe99aEncodeTparkDbModels(out *jwriter.Writer, in Status) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.User))
+		out.Int(int(in.User))
 	}
 	{
 		const prefix string = ",\"forum\":"
@@ -76,7 +76,7 @@ func easyjson727fe99aEncodeTparkDbModels(out *jwriter.Writer, in Status) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Forum))
+		out.Int(int(in.Forum))
 	}
 	{
 		const prefix string = ",\"thread\":"
@@ -86,7 +86,7 @@ func easyjson727fe99aEncodeTparkDbModels(out *jwriter.Writer, in Status) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Thread))
+		out.Int(int(in.Thread))
 	}
 	{
 		const prefix string = ",\"post\":"
@@ -96,7 +96,7 @@ func easyjson727fe99aEncodeTparkDbModels(out *jwriter.Writer, in Status) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Post))
+		out.Int(int(in.Post))
 	}
 	out.RawByte('}')
 }

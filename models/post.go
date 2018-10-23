@@ -6,8 +6,8 @@ import (
 
 //easyjson:json
 type Post struct {
-	Id       float32   `json:"id,omitempty"`
-	Parent   float32   `json:"parent,omitempty"`
+	Id       int       `json:"id,omitempty"`
+	Parent   int       `json:"parent,omitempty"`
 	Author   string    `json:"author"`
 	Message  string    `json:"message"`
 	IsEdited bool      `json:"isEdited,omitempty"`

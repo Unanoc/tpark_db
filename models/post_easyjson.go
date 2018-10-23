@@ -541,9 +541,9 @@ func easyjson5a72dc82DecodeTparkDbModels5(in *jlexer.Lexer, out *Post) {
 		}
 		switch key {
 		case "id":
-			out.Id = float32(in.Float32())
+			out.Id = int(in.Int())
 		case "parent":
-			out.Parent = float32(in.Float32())
+			out.Parent = int(in.Int())
 		case "author":
 			out.Author = string(in.String())
 		case "message":
@@ -580,7 +580,7 @@ func easyjson5a72dc82EncodeTparkDbModels5(out *jwriter.Writer, in Post) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Id))
+		out.Int(int(in.Id))
 	}
 	if in.Parent != 0 {
 		const prefix string = ",\"parent\":"
@@ -590,7 +590,7 @@ func easyjson5a72dc82EncodeTparkDbModels5(out *jwriter.Writer, in Post) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Parent))
+		out.Int(int(in.Parent))
 	}
 	{
 		const prefix string = ",\"author\":"

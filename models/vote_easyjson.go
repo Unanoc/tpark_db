@@ -39,7 +39,7 @@ func easyjsonE3ecfa40DecodeTparkDbModels(in *jlexer.Lexer, out *Vote) {
 		case "nickname":
 			out.Nickname = string(in.String())
 		case "voice":
-			out.Voice = float32(in.Float32())
+			out.Voice = int(in.Int())
 		default:
 			in.SkipRecursive()
 		}
@@ -72,7 +72,7 @@ func easyjsonE3ecfa40EncodeTparkDbModels(out *jwriter.Writer, in Vote) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Float32(float32(in.Voice))
+		out.Int(int(in.Voice))
 	}
 	out.RawByte('}')
 }

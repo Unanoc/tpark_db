@@ -47,6 +47,7 @@ func ForumGetOneHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 
 	slug := ctx.UserValue("slug")
+
 	forum, err := helpers.ForumGetBySlug(slug.(string))
 
 	switch err {
@@ -104,6 +105,7 @@ func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 
 func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
+
 	slug := ctx.UserValue("slug").(string)
 	limit := ctx.FormValue("limit")
 	since := ctx.FormValue("since")
@@ -130,6 +132,7 @@ func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
 
 func ForumGetUsersHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
+
 	slug := ctx.UserValue("slug").(string)
 	limit := ctx.FormValue("limit")
 	since := ctx.FormValue("since")
