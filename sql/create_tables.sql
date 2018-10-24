@@ -47,14 +47,14 @@ CREATE TABLE IF NOT EXISTS posts (
   "forum"    CITEXT         NOT NULL REFERENCES forums ("slug"),
   "isEdited" BOOLEAN        DEFAULT FALSE,
   "message"  TEXT           NOT NULL,
-  "parent"   BIGINT         DEFAULT 0,
+  "parent"   INTEGER         DEFAULT 0,
   "thread"   INTEGER        NOT NULL REFERENCES threads ("id"),
-  "path"     BIGINT []
+  "path"     INTEGER[]
 );
 
 -- TABLE "votes" --
 CREATE TABLE IF NOT EXISTS votes (
-  "voice"    SMALLINT NOT NULL,
+  "voice"    INTEGER NOT NULL,
   "nickname" CITEXT   NOT NULL,
   "thread"   INTEGER
 );

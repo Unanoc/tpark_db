@@ -20,15 +20,15 @@ func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBodyString(err.Error())
 		return
 	}
-	err = helpers.ThreadCreateHelper(&posts, slug_or_id)
+	result, err := helpers.ThreadCreateHelper(&posts, slug_or_id)
 
 	switch err {
 	case nil:
 		ctx.SetStatusCode(fasthttp.StatusCreated) // 201
-		buf, _ := posts.MarshalJSON()
+		buf, _ := result.MarshalJSON()
 		ctx.SetBody(buf)
 	case errors.NoPostsForCreate:
-		ctx.SetStatusCode(fasthttp.StatusCreated)
+		ctx.SetStatusCode(fasthttp.StatusCreated) // 201
 		ctx.SetBody(ctx.PostBody())
 	case errors.ThreadNotFound:
 		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
@@ -37,10 +37,10 @@ func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 		}
 		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
-	case errors.NoThreadParent:
+	case errors.PostParentNotFound:
 		ctx.SetStatusCode(fasthttp.StatusConflict)
 		errorResp := errors.Error{
-			Message: fmt.Sprintf("Can't find thread by slug_or_id: %s", slug_or_id),
+			Message: fmt.Sprintf("Can't find parent of post"),
 		}
 		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)

@@ -7,73 +7,139 @@ import (
 	"tpark_db/database"
 	"tpark_db/errors"
 	"tpark_db/models"
+
+	"github.com/jackc/pgx"
 )
 
-func ThreadCreateHelper(posts *models.Posts, slug string) error {
+func GetThreadBySlug(slug string) (*string, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
-	if len(*posts) == 0 {
-		return errors.NoPostsForCreate
+	rows := tx.QueryRow(` 
+		SELECT slug
+		FROM threads
+		WHERE slug = $1
+	`, slug)
+
+	var result string
+	err := rows.Scan(&result)
+	if err != nil {
+		return nil, errors.ThreadNotFound
 	}
 
-	batch := tx.BeginBatch()
-	defer batch.Close()
+	database.CommitTransaction(tx)
+	return &result, nil
+}
 
-	// checking if thread exist is database
-	id, err := strconv.Atoi(slug) // checking is "slug" or "id"
-	var forum string
-	if err == nil {
-		rows := tx.QueryRow(` 
-			SELECT id, forum
-			FROM threads
-			WHERE id = $1
-		`, id)
-		if err = rows.Scan(&id, &forum); err != nil {
-			return errors.ThreadNotFound
+func GetThreadById(id int) (*string, error) {
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+
+	rows := tx.QueryRow(` 
+		SELECT slug
+		FROM threads
+		WHERE id = $1
+	`, id)
+
+	var result string
+	err := rows.Scan(&result)
+	if err != nil {
+		return nil, errors.ThreadNotFound
+	}
+
+	database.CommitTransaction(tx)
+	return &result, nil
+}
+
+func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, error) {
+	if len(*posts) == 0 {
+		return nil, errors.NoPostsForCreate
+	}
+
+	var slugThread *string
+	var err error
+	if IsNumber(slugOrId) {
+		id, _ := strconv.Atoi(slugOrId)
+		slugThread, err = GetThreadById(id)
+		if err != nil {
+			return nil, err
 		}
 	} else {
-		rows := tx.QueryRow(`
-			SELECT id, forum
-			FROM threads
-			WHERE slug = $1
-		`, slug)
-		if err = rows.Scan(&id, &forum); err != nil {
-			return errors.ThreadNotFound
+		slugThread, err = GetThreadBySlug(slugOrId)
+		if err != nil {
+			return nil, err
 		}
 	}
 
+	fmt.Println(slugThread)
+
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+
 	created := time.Now()
-
-	//TODOs
+	insertedPosts := models.Posts{}
 	for _, post := range *posts {
+		var rows *pgx.Row
 
-		rows := tx.QueryRow(`
-			INSERT
-			INTO posts (author, created, message, thread, parent)
-			VALUES ($1, $2, $3, $4, $5) 
-			RETURNING author, created, forum, id, isEdited, message, parent, thread`,
-			&post.Author,
-			created,
-			&post.Message,
-			&post.Thread,
-			&post.Parent)
+		if post.Parent != 0 {
+			rows = tx.QueryRow(`
+				INSERT
+				INTO posts (author, created, message, thread, parent, forum, id, isEdited)
+				VALUES ($1, $2, $3, $4, $5) 
+				RETURNING author, created, forum, id, isEdited, message, parent, thread`,
+				&post.Author,
+				&created,
+				&post.Message,
+				&slugThread,
+				&post.Parent,
+			)
 
-		err := rows.Scan(&post.Author, &post.Created, &post.Forum, &post.Id, &post.IsEdited, &post.Message, &post.Parent, &post.Thread)
-		if err != nil {
-			// switch err.(pgx.PgError).Code {
-			// case "23505":
-			// 	return errors.ThreadIsExist
-			// case "23502":
-			// 	return errors.UserNotFound
-			// default:
-			// 	return err
-			// }
+			insertedPost := models.Post{}
+			err := rows.Scan(
+				&insertedPost.Author,
+				&insertedPost.Created,
+				&insertedPost.Forum,
+				&insertedPost.Id,
+				&insertedPost.IsEdited,
+				&insertedPost.Message,
+				&insertedPost.Parent,
+				&insertedPost.Thread,
+			)
+			if err != nil {
+				return nil, errors.PostParentNotFound
+			}
 
+		} else {
+			rows = tx.QueryRow(`
+				INSERT
+				INTO posts (author, created, message, thread, parent, forum, id, isEdited)
+				VALUES ($1, $2, $3, $4, $5) 
+				RETURNING author, created, forum, id, isEdited, message, parent, thread`,
+				&post.Author,
+				&created,
+				&post.Message,
+				&slugThread,
+				&post.Parent,
+			)
+
+			insertedPost := models.Post{}
+			err := rows.Scan(
+				&insertedPost.Author,
+				&insertedPost.Created,
+				&insertedPost.Forum,
+				&insertedPost.Id,
+				&insertedPost.IsEdited,
+				&insertedPost.Message,
+				&insertedPost.Parent,
+				&insertedPost.Thread,
+			)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 	}
 
 	database.CommitTransaction(tx)
-	return nil
+	return &insertedPosts, nil
 }
