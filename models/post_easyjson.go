@@ -342,29 +342,6 @@ func easyjson5a72dc82DecodeTparkDbModels3(in *jlexer.Lexer, out *Post) {
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.Created).UnmarshalJSON(data))
 			}
-		case "Path":
-			if in.IsNull() {
-				in.Skip()
-				out.Path = nil
-			} else {
-				in.Delim('[')
-				if out.Path == nil {
-					if !in.IsDelim(']') {
-						out.Path = make([]int, 0, 8)
-					} else {
-						out.Path = []int{}
-					}
-				} else {
-					out.Path = (out.Path)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v4 int
-					v4 = int(in.Int())
-					out.Path = append(out.Path, v4)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
 		default:
 			in.SkipRecursive()
 		}
@@ -458,27 +435,6 @@ func easyjson5a72dc82EncodeTparkDbModels3(out *jwriter.Writer, in Post) {
 			out.RawString(prefix)
 		}
 		out.Raw((in.Created).MarshalJSON())
-	}
-	{
-		const prefix string = ",\"Path\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		if in.Path == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
-			out.RawString("null")
-		} else {
-			out.RawByte('[')
-			for v5, v6 := range in.Path {
-				if v5 > 0 {
-					out.RawByte(',')
-				}
-				out.Int(int(v6))
-			}
-			out.RawByte(']')
-		}
 	}
 	out.RawByte('}')
 }

@@ -11,44 +11,44 @@ import (
 	"github.com/jackc/pgx"
 )
 
-func GetThreadBySlug(slug string) (*string, error) {
+func GetThreadBySlug(slug string) (*models.Thread, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
 	rows := tx.QueryRow(` 
-		SELECT slug
+		SELECT id, title, author, forum, message, votes, slug, created
 		FROM threads
 		WHERE slug = $1
 	`, slug)
 
-	var result string
-	err := rows.Scan(&result)
+	var thread models.Thread
+	err := rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes, &thread.Slug, &thread.Created)
 	if err != nil {
 		return nil, errors.ThreadNotFound
 	}
 
 	database.CommitTransaction(tx)
-	return &result, nil
+	return &thread, nil
 }
 
-func GetThreadById(id int) (*string, error) {
+func GetThreadById(id int) (*models.Thread, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
 	rows := tx.QueryRow(` 
-		SELECT slug
+		SELECT id, title, author, forum, message, votes, slug, created
 		FROM threads
 		WHERE id = $1
 	`, id)
 
-	var result string
-	err := rows.Scan(&result)
+	var thread models.Thread
+	err := rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes, &thread.Slug, &thread.Created)
 	if err != nil {
 		return nil, errors.ThreadNotFound
 	}
 
 	database.CommitTransaction(tx)
-	return &result, nil
+	return &thread, nil
 }
 
 func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, error) {
@@ -56,22 +56,20 @@ func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, er
 		return nil, errors.NoPostsForCreate
 	}
 
-	var slugThread *string
+	var threadByID *models.Thread
 	var err error
 	if IsNumber(slugOrId) {
 		id, _ := strconv.Atoi(slugOrId)
-		slugThread, err = GetThreadById(id)
+		threadByID, err = GetThreadById(id)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		slugThread, err = GetThreadBySlug(slugOrId)
+		threadByID, err = GetThreadBySlug(slugOrId)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	fmt.Println(slugThread)
 
 	tx := database.StartTransaction()
 	defer tx.Rollback()
@@ -82,44 +80,20 @@ func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, er
 		var rows *pgx.Row
 
 		if post.Parent != 0 {
-			rows = tx.QueryRow(`
-				INSERT
-				INTO posts (author, created, message, thread, parent, forum, id, isEdited)
-				VALUES ($1, $2, $3, $4, $5) 
-				RETURNING author, created, forum, id, isEdited, message, parent, thread`,
-				&post.Author,
-				&created,
-				&post.Message,
-				&slugThread,
-				&post.Parent,
-			)
-
-			insertedPost := models.Post{}
-			err := rows.Scan(
-				&insertedPost.Author,
-				&insertedPost.Created,
-				&insertedPost.Forum,
-				&insertedPost.Id,
-				&insertedPost.IsEdited,
-				&insertedPost.Message,
-				&insertedPost.Parent,
-				&insertedPost.Thread,
-			)
-			if err != nil {
-				return nil, errors.PostParentNotFound
-			}
-
+			// TODO
 		} else {
+			fmt.Println(post.IsEdited)
 			rows = tx.QueryRow(`
 				INSERT
-				INTO posts (author, created, message, thread, parent, forum, id, isEdited)
-				VALUES ($1, $2, $3, $4, $5) 
-				RETURNING author, created, forum, id, isEdited, message, parent, thread`,
-				&post.Author,
-				&created,
-				&post.Message,
-				&slugThread,
-				&post.Parent,
+				INTO posts (author, created, message, thread, parent, forum)
+				VALUES ($1, $2, $3, $4, $5, $6) 
+				RETURNING author, created, forum, id, message, parent, thread`,
+				post.Author,
+				created,
+				post.Message,
+				threadByID.Id,
+				post.Parent,
+				threadByID.Forum,
 			)
 
 			insertedPost := models.Post{}
@@ -128,7 +102,6 @@ func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, er
 				&insertedPost.Created,
 				&insertedPost.Forum,
 				&insertedPost.Id,
-				&insertedPost.IsEdited,
 				&insertedPost.Message,
 				&insertedPost.Parent,
 				&insertedPost.Thread,
@@ -136,6 +109,7 @@ func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, er
 			if err != nil {
 				return nil, err
 			}
+			insertedPosts = append(insertedPosts, &insertedPost)
 		}
 
 	}
