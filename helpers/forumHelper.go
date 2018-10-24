@@ -66,7 +66,13 @@ func ForumGetBySlug(slug string) (*models.Forum, error) {
 	return &forum, nil
 }
 
-func ForumCreateThreadHelper(t *models.Thread) error {
+func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
+	if t.Slug != "" {
+		existThread, err := GetThreadBySlug(t.Slug)
+		if err == nil {
+			return existThread, errors.ThreadIsExist
+		}
+	}
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
@@ -85,18 +91,15 @@ func ForumCreateThreadHelper(t *models.Thread) error {
 	err := rows.Scan(&t.Author, &t.Created, &t.Forum, &t.Id, &t.Message, &t.Title)
 	if err != nil {
 		switch err.(pgx.PgError).Code {
-		case "23505":
-			// TODO
-			return errors.ThreadIsExist
-		case "23502":
-			return errors.UserNotFound
+		case "23503":
+			return nil, errors.ForumOrAuthorNotFound
 		default:
-			return err
+			return nil, err
 		}
 	}
 
 	database.CommitTransaction(tx)
-	return nil
+	return t, nil
 }
 
 func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threads, error) {

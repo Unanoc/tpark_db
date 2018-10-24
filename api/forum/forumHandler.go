@@ -78,8 +78,9 @@ func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBodyString(err.Error())
 		return
 	}
-	slug := ctx.UserValue("slug").(string)
-	err = helpers.ForumCreateThreadHelper(&thread)
+	forumSlug := ctx.UserValue("slug").(string)
+	thread.Forum = forumSlug
+	result, err := helpers.ForumCreateThreadHelper(&thread)
 
 	switch err {
 	case nil:
@@ -89,13 +90,13 @@ func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 	case errors.ForumOrAuthorNotFound:
 		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
 		errorResp := errors.Error{
-			Message: fmt.Sprintf("Can't find forum by slug: %s", slug),
+			Message: fmt.Sprintf("Can't find forum by slug: %s", forumSlug),
 		}
 		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
 	case errors.ThreadIsExist:
 		ctx.SetStatusCode(fasthttp.StatusConflict) // 409
-		buf, _ := thread.MarshalJSON()
+		buf, _ := result.MarshalJSON()
 		ctx.SetBody(buf)
 	default:
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500

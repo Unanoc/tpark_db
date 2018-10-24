@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"tpark_db/database"
@@ -82,7 +81,6 @@ func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, er
 		if post.Parent != 0 {
 			// TODO
 		} else {
-			fmt.Println(post.IsEdited)
 			rows = tx.QueryRow(`
 				INSERT
 				INTO posts (author, created, message, thread, parent, forum)
