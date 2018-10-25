@@ -68,7 +68,7 @@ func ForumGetBySlug(slug string) (*models.Forum, error) {
 
 func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 	if t.Slug != "" {
-		existThread, err := GetThreadBySlug(t.Slug)
+		existThread, err := GetThreadBySlugOrId(t.Slug)
 		if err == nil {
 			return existThread, errors.ThreadIsExist
 		}

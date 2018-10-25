@@ -33,7 +33,7 @@ func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 	case errors.ThreadNotFound:
 		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
 		errorResp := errors.Error{
-			Message: fmt.Sprintf("Can't find thread by slug_or_id: %s", slug_or_id),
+			Message: fmt.Sprintf("Can't find thread by slug or id: %s", slug_or_id),
 		}
 		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
@@ -63,5 +63,33 @@ func ThreadUpdateHandler(ctx *fasthttp.RequestCtx) {
 }
 
 func ThreadVoteHandler(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
 
+	slug_or_id := ctx.UserValue("slug_or_id").(string)
+
+	vote := models.Vote{}
+	err := vote.UnmarshalJSON(ctx.PostBody())
+	if err != nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest) // 400 Bad Request
+		ctx.SetBodyString(err.Error())
+		return
+	}
+
+	result, err := helpers.ThreadVoteHelper(&vote, slug_or_id)
+	switch err {
+	case nil:
+		ctx.SetStatusCode(fasthttp.StatusOK) // 200
+		buf, _ := result.MarshalJSON()
+		ctx.SetBody(buf)
+	case errors.ThreadNotFound:
+		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
+		errorResp := errors.Error{
+			Message: fmt.Sprintf("Can't find thread by slug or id: %s", slug_or_id),
+		}
+		buf, _ := errorResp.MarshalJSON()
+		ctx.SetBody(buf)
+	default:
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
+		ctx.SetBodyString(err.Error())
+	}
 }

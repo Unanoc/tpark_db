@@ -55,8 +55,7 @@ CREATE TABLE IF NOT EXISTS posts (
 -- TABLE "votes" --
 CREATE TABLE IF NOT EXISTS votes (
   "voice"    INTEGER NOT NULL,
-  "nickname" CITEXT   NOT NULL,
-  "thread"   INTEGER
+  "nickname" CITEXT   NOT NULL
 );
 
 
@@ -79,7 +78,3 @@ CREATE INDEX IF NOT EXISTS index_on_threads_id
 -- INDEX on posts "id"
 CREATE INDEX IF NOT EXISTS index_on_posts_id
 ON posts ("id");
-
--- INDEX on votes "thread" and "nickname"
-CREATE UNIQUE INDEX index_on_votes_nickname_and_thread 
-ON votes ("thread", "nickname");

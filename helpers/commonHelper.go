@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"strconv"
 	"tpark_db/database"
 	"tpark_db/errors"
 	"tpark_db/models"
@@ -16,42 +17,56 @@ func IsNumber(s string) bool {
 	return true
 }
 
-func GetThreadBySlug(slug string) (*models.Thread, error) {
+func GetThreadBySlugOrId(slugOrId string) (*models.Thread, error) {
+	var err error
+	var thread models.Thread
+
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
-	rows := tx.QueryRow(` 
-		SELECT id, title, author, forum, message, votes, slug, created
-		FROM threads
-		WHERE slug = $1
-	`, slug)
+	if IsNumber(slugOrId) {
+		id, _ := strconv.Atoi(slugOrId)
+		rows := tx.QueryRow(` 
+			SELECT id, title, author, forum, message, votes, slug, created
+			FROM threads
+			WHERE id = $1`, id)
 
-	var thread models.Thread
-	err := rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes, &thread.Slug, &thread.Created)
-	if err != nil {
-		return nil, errors.ThreadNotFound
+		err = rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes, &thread.Slug, &thread.Created)
+		if err != nil {
+			return nil, errors.ThreadNotFound
+		}
+	} else {
+		rows := tx.QueryRow(` 
+			SELECT id, title, author, forum, message, votes, slug, created
+			FROM threads
+			WHERE slug = $1`, slugOrId)
+
+		err = rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes, &thread.Slug, &thread.Created)
+		if err != nil {
+			return nil, errors.ThreadNotFound
+		}
 	}
 
 	database.CommitTransaction(tx)
 	return &thread, nil
 }
 
-func GetThreadById(id int) (*models.Thread, error) {
+func CheckThreadVotes(v *models.Vote) (*models.Vote, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
 	rows := tx.QueryRow(` 
-		SELECT id, title, author, forum, message, votes, slug, created
-		FROM threads
-		WHERE id = $1
-	`, id)
+		SELECT nickname, voice
+		FROM votes
+		WHERE nickname = $1`,
+		v.Nickname)
 
-	var thread models.Thread
-	err := rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes, &thread.Slug, &thread.Created)
+	var vote models.Vote
+	err := rows.Scan(&vote.Nickname, &vote.Voice)
 	if err != nil {
-		return nil, errors.ThreadNotFound
+		return nil, err
 	}
 
 	database.CommitTransaction(tx)
-	return &thread, nil
+	return &vote, nil
 }

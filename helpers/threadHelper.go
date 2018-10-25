@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"strconv"
 	"time"
 	"tpark_db/database"
 	"tpark_db/errors"
@@ -15,19 +14,9 @@ func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, er
 		return nil, errors.NoPostsForCreate
 	}
 
-	var threadByID *models.Thread
-	var err error
-	if IsNumber(slugOrId) {
-		id, _ := strconv.Atoi(slugOrId)
-		threadByID, err = GetThreadById(id)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		threadByID, err = GetThreadBySlug(slugOrId)
-		if err != nil {
-			return nil, err
-		}
+	threadByID, err := GetThreadBySlugOrId(slugOrId)
+	if err != nil {
+		return nil, err
 	}
 
 	tx := database.StartTransaction()
@@ -69,9 +58,96 @@ func ThreadCreateHelper(posts *models.Posts, slugOrId string) (*models.Posts, er
 			}
 			insertedPosts = append(insertedPosts, &insertedPost)
 		}
-
 	}
 
 	database.CommitTransaction(tx)
 	return &insertedPosts, nil
+}
+
+func ThreadVoteHelper(v *models.Vote, slugOrId string) (*models.Thread, error) {
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+
+	foundVote, _ := CheckThreadVotes(v)
+	thread, err := GetThreadBySlugOrId(slugOrId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var rows *pgx.Row
+	var editedThread models.Thread
+	var threadVoices int
+
+	if foundVote == nil { // like by user did not exist
+		_, err := tx.Exec(`
+			INSERT INTO votes (nickname, voice) VALUES ($1, $2)`,
+			&v.Nickname, &v.Voice)
+
+		if err != nil {
+			return nil, err
+		}
+
+		threadVoices = thread.Votes + v.Voice // counting of votes
+
+		rows = tx.QueryRow(`
+			UPDATE threads
+			SET votes = $1
+			WHERE slug = $2
+			RETURNING id, title, author, forum, message, votes, slug, created`, &threadVoices, &thread.Slug,
+		)
+
+		err = rows.Scan(
+			&editedThread.Id,
+			&editedThread.Title,
+			&editedThread.Author,
+			&editedThread.Forum,
+			&editedThread.Message,
+			&editedThread.Votes,
+			&editedThread.Slug,
+			&editedThread.Created,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+		_, err := tx.Exec(`
+			UPDATE votes 
+			SET voice = $2
+			WHERE nickname = $1`,
+			&v.Nickname, &v.Voice)
+
+		if err != nil {
+			return nil, err
+		}
+
+		threadVoices = thread.Votes + v.Voice // counting of votes
+
+		rows = tx.QueryRow(`
+			UPDATE threads
+			SET votes = $1
+			WHERE slug = $2
+			RETURNING id, title, author, forum, message, votes, slug, created`, &threadVoices, &thread.Slug,
+		)
+
+		err = rows.Scan(
+			&editedThread.Id,
+			&editedThread.Title,
+			&editedThread.Author,
+			&editedThread.Forum,
+			&editedThread.Message,
+			&editedThread.Votes,
+			&editedThread.Slug,
+			&editedThread.Created,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	database.CommitTransaction(tx)
+	return &editedThread, nil
 }
