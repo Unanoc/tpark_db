@@ -51,7 +51,7 @@ func GetThreadBySlugOrId(slugOrId string) (*models.Thread, error) {
 	return &thread, nil
 }
 
-func CheckThreadVotes(v *models.Vote) (*models.Vote, error) {
+func CheckThreadVotesByNickname(nickname string) (*models.Vote, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
@@ -59,7 +59,7 @@ func CheckThreadVotes(v *models.Vote) (*models.Vote, error) {
 		SELECT nickname, voice
 		FROM votes
 		WHERE nickname = $1`,
-		v.Nickname)
+		nickname)
 
 	var vote models.Vote
 	err := rows.Scan(&vote.Nickname, &vote.Voice)

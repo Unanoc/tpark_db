@@ -68,7 +68,7 @@ func ThreadVoteHelper(v *models.Vote, slugOrId string) (*models.Thread, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
-	foundVote, _ := CheckThreadVotes(v)
+	foundVote, _ := CheckThreadVotesByNickname(v.Nickname)
 	thread, err := GetThreadBySlugOrId(slugOrId)
 
 	if err != nil {
@@ -113,17 +113,17 @@ func ThreadVoteHelper(v *models.Vote, slugOrId string) (*models.Thread, error) {
 		}
 
 	} else {
-		_, err := tx.Exec(`
+		oldVote, _ := CheckThreadVotesByNickname(v.Nickname)
+
+		if _, err := tx.Exec(`
 			UPDATE votes 
 			SET voice = $2
 			WHERE nickname = $1`,
-			&v.Nickname, &v.Voice)
-
-		if err != nil {
+			&v.Nickname, &v.Voice); err != nil {
 			return nil, err
 		}
 
-		threadVoices = thread.Votes + v.Voice // counting of votes
+		threadVoices = thread.Votes + v.Voice - oldVote.Voice // counting of votes
 
 		rows = tx.QueryRow(`
 			UPDATE threads
