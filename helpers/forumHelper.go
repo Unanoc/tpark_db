@@ -73,13 +73,14 @@ func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 			return existThread, errors.ThreadIsExist
 		}
 	}
+
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
 	rows := tx.QueryRow(`
 		INSERT
 		INTO threads (author, created, message, title, slug, forum)
-		VALUES ($1, $2, $3, $4, $5, $6) 
+		VALUES ($1, $2, $3, $4, $5, (SELECT slug FROM forums WHERE slug = $6)) 
 		RETURNING author, created, forum, id, message, title`,
 		&t.Author,
 		&t.Created,
@@ -92,6 +93,8 @@ func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 	if err != nil {
 		switch err.(pgx.PgError).Code {
 		case "23503":
+			return nil, errors.ForumOrAuthorNotFound
+		case "23502":
 			return nil, errors.ForumOrAuthorNotFound
 		default:
 			return nil, err
