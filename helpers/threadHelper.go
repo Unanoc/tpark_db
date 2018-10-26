@@ -99,9 +99,12 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
+	_, err := UserGetOneHelper(v.Nickname)
+	if err != nil {
+		return nil, errors.ThreadNotFound
+	}
 	foundVote, _ := CheckThreadVotesByNickname(v.Nickname)
 	thread, err := GetThreadBySlugOrId(slugOrID)
-
 	if err != nil {
 		return nil, err
 	}

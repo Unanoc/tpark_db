@@ -48,7 +48,9 @@ func ForumGetBySlug(slug string) (*models.Forum, error) {
 	forum := models.Forum{}
 
 	err := tx.QueryRow(`
-		SELECT slug, title, "user", posts, threads
+		SELECT slug, title, "user", 
+			(SELECT COUNT(*) FROM posts WHERE forum = $1), 
+			(SELECT COUNT(*) FROM threads WHERE forum = $1)
 		FROM forums
 		WHERE slug = $1`,
 		slug).Scan(
@@ -178,7 +180,7 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 	return threads, nil
 }
 
-func ForumGetUsersHelper(slug string, limit, since, desc []byte) (models.Users, error) {
+func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 	var queryRows *pgx.Rows
@@ -189,16 +191,26 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (models.Users, 
 			queryRows, err = tx.Query(`
 				SELECT nickname, fullname, about, email
 				FROM users
-				WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
-				ORDER BY created DESC
+				WHERE nickname IN (
+						SELECT author FROM threads WHERE forum = $1
+						UNION
+						SELECT author FROM posts WHERE forum = $1
+					) 
+					AND LOWER(nickname) < LOWER($2::TEXT)
+				ORDER BY nickname DESC
 				LIMIT $3::TEXT::INTEGER`,
 				slug, since, limit)
 		} else {
 			queryRows, err = tx.Query(`
 				SELECT nickname, fullname, about, email
 				FROM users
-				WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
-				ORDER BY created
+				WHERE nickname IN (
+						SELECT author FROM threads WHERE forum = $1
+						UNION
+						SELECT author FROM posts WHERE forum = $1
+					)  
+					AND LOWER(nickname) > LOWER($2::TEXT)
+				ORDER BY nickname
 				LIMIT $3::TEXT::INTEGER`,
 				slug, since, limit)
 		}
@@ -207,16 +219,24 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (models.Users, 
 			queryRows, err = tx.Query(`
 				SELECT nickname, fullname, about, email
 				FROM users
-				WHERE forum = $1
-				ORDER BY created DESC
+				WHERE nickname IN (
+						SELECT author FROM threads WHERE forum = $1
+						UNION
+						SELECT author FROM posts WHERE forum = $1
+					) 
+				ORDER BY nickname DESC
 				LIMIT $2::TEXT::INTEGER`,
 				slug, limit)
 		} else {
 			queryRows, err = tx.Query(`
-				SELECT author, created, forum, id, message, slug, title, votes
-				FROM threads
-				WHERE forum = $1
-				ORDER BY created
+				SELECT nickname, fullname, about, email
+				FROM users
+				WHERE nickname IN (
+						SELECT author FROM threads WHERE forum = $1
+						UNION
+						SELECT author FROM posts WHERE forum = $1
+					) 
+				ORDER BY nickname
 				LIMIT $2::TEXT::INTEGER`,
 				slug, limit)
 		}
@@ -231,7 +251,10 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (models.Users, 
 	for queryRows.Next() {
 		user := models.User{}
 
-		if err = queryRows.Scan(&user.Nickname, &user.Fullname, &user.About,
+		if err = queryRows.Scan(
+			&user.Nickname,
+			&user.Fullname,
+			&user.About,
 			&user.Email); err != nil {
 			fmt.Println(err)
 		}
@@ -247,5 +270,5 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (models.Users, 
 	}
 
 	database.CommitTransaction(tx)
-	return users, nil
+	return &users, nil
 }
