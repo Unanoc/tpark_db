@@ -20,7 +20,8 @@ var pgxConfig = pgx.ConnConfig{
 	FallbackTLSConfig: nil,
 }
 
-const dataBaseSchema = "./sql/create_tables.sql"
+const CreateeSchema = "./sql/create_tables.sql"
+const ClearSchema = "./sql/erase_tables.sql"
 
 func Connect() {
 	var err error
@@ -32,7 +33,7 @@ func Connect() {
 		log.Fatalln(err) // Fatalln is equivalent to Println() followed by a call to os.Exit(1)
 	}
 
-	if err = createTables(); err != nil {
+	if err = ExecSQLScript(CreateeSchema); err != nil {
 		log.Println(err)
 	}
 	log.Println("SQL Schema was initialized successfully")
@@ -42,14 +43,14 @@ func Disconnect() {
 	db.Close()
 }
 
-func createTables() error {
+func ExecSQLScript(path string) error {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	content, err := ioutil.ReadFile(dataBaseSchema)
+	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Println(err)
 		return err

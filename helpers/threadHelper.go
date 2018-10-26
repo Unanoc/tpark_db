@@ -127,7 +127,6 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 			WHERE slug = $2
 			RETURNING id, title, author, forum, message, votes, slug, created`, &threadVoices, &thread.Slug,
 		)
-
 		err = rows.Scan(
 			&editedThread.Id,
 			&editedThread.Title,
@@ -142,7 +141,6 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 		if err != nil {
 			return nil, err
 		}
-
 	} else {
 		oldVote, _ := CheckThreadVotesByNickname(v.Nickname)
 
@@ -181,4 +179,81 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 
 	database.CommitTransaction(tx)
 	return &editedThread, nil
+}
+
+func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.Threads, error) {
+	// thread, err := GetThreadBySlugOrId(slugOrID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// tx := database.StartTransaction()
+	// defer tx.Rollback()
+	// var queryRows *pgx.Rows
+	// var err error
+
+	// if since != nil {
+	// 	if bytes.Equal([]byte("true"), desc) {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT nickname, fullname, about, email
+	// 			FROM users
+	// 			WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
+	// 			ORDER BY created DESC
+	// 			LIMIT $3::TEXT::INTEGER`,
+	// 			slug, since, limit)
+	// 	} else {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT nickname, fullname, about, email
+	// 			FROM users
+	// 			WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
+	// 			ORDER BY created
+	// 			LIMIT $3::TEXT::INTEGER`,
+	// 			slug, since, limit)
+	// 	}
+	// } else {
+	// 	if bytes.Equal([]byte("true"), desc) {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT nickname, fullname, about, email
+	// 			FROM users
+	// 			WHERE forum = $1
+	// 			ORDER BY created DESC
+	// 			LIMIT $2::TEXT::INTEGER`,
+	// 			slug, limit)
+	// 	} else {
+	// 		queryRows, err = tx.Query(`
+	// 			SELECT author, created, forum, id, message, slug, title, votes
+	// 			FROM threads
+	// 			WHERE forum = $1
+	// 			ORDER BY created
+	// 			LIMIT $2::TEXT::INTEGER`,
+	// 			slug, limit)
+	// 	}
+	// }
+	// defer queryRows.Close()
+
+	// if err != nil {
+	// 	return nil, errors.UserNotFound
+	// }
+
+	// users := models.Users{}
+	// for queryRows.Next() {
+	// 	user := models.User{}
+
+	// 	if err = queryRows.Scan(&user.Nickname, &user.Fullname, &user.About,
+	// 		&user.Email); err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// 	users = append(users, &user)
+	// }
+
+	// if len(users) == 0 {
+	// 	_, err := ForumGetBySlug(slug)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		return nil, errors.UserNotFound
+	// 	}
+	// }
+
+	// database.CommitTransaction(tx)
+	return nil, errors.ThreadNotFound
 }
