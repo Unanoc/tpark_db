@@ -203,7 +203,7 @@ func easyjson5a72dc82DecodeTparkDbModels2(in *jlexer.Lexer, out *PostFull) {
 				if out.Author == nil {
 					out.Author = new(User)
 				}
-				(*out.Author).UnmarshalEasyJSON(in)
+				easyjson5a72dc82DecodeTparkDbModels3(in, &*out.Author)
 			}
 		case "thread":
 			if in.IsNull() {
@@ -213,7 +213,7 @@ func easyjson5a72dc82DecodeTparkDbModels2(in *jlexer.Lexer, out *PostFull) {
 				if out.Thread == nil {
 					out.Thread = new(Thread)
 				}
-				(*out.Thread).UnmarshalEasyJSON(in)
+				easyjson5a72dc82DecodeTparkDbModels4(in, &*out.Thread)
 			}
 		case "forum":
 			if in.IsNull() {
@@ -257,7 +257,7 @@ func easyjson5a72dc82EncodeTparkDbModels2(out *jwriter.Writer, in PostFull) {
 		} else {
 			out.RawString(prefix)
 		}
-		(*in.Author).MarshalEasyJSON(out)
+		easyjson5a72dc82EncodeTparkDbModels3(out, *in.Author)
 	}
 	if in.Thread != nil {
 		const prefix string = ",\"thread\":"
@@ -267,7 +267,7 @@ func easyjson5a72dc82EncodeTparkDbModels2(out *jwriter.Writer, in PostFull) {
 		} else {
 			out.RawString(prefix)
 		}
-		(*in.Thread).MarshalEasyJSON(out)
+		easyjson5a72dc82EncodeTparkDbModels4(out, *in.Thread)
 	}
 	if in.Forum != nil {
 		const prefix string = ",\"forum\":"
@@ -305,7 +305,7 @@ func (v *PostFull) UnmarshalJSON(data []byte) error {
 func (v *PostFull) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson5a72dc82DecodeTparkDbModels2(l, v)
 }
-func easyjson5a72dc82DecodeTparkDbModels3(in *jlexer.Lexer, out *Post) {
+func easyjson5a72dc82DecodeTparkDbModels4(in *jlexer.Lexer, out *Thread) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -326,8 +326,224 @@ func easyjson5a72dc82DecodeTparkDbModels3(in *jlexer.Lexer, out *Post) {
 		switch key {
 		case "id":
 			out.Id = int(in.Int())
+		case "title":
+			out.Title = string(in.String())
+		case "author":
+			out.Author = string(in.String())
+		case "forum":
+			out.Forum = string(in.String())
+		case "message":
+			out.Message = string(in.String())
+		case "votes":
+			out.Votes = int(in.Int())
+		case "slug":
+			out.Slug = string(in.String())
+		case "created":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Created).UnmarshalJSON(data))
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson5a72dc82EncodeTparkDbModels4(out *jwriter.Writer, in Thread) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.Id != 0 {
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Id))
+	}
+	{
+		const prefix string = ",\"title\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Title))
+	}
+	{
+		const prefix string = ",\"author\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Author))
+	}
+	if in.Forum != "" {
+		const prefix string = ",\"forum\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Forum))
+	}
+	{
+		const prefix string = ",\"message\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Message))
+	}
+	if in.Votes != 0 {
+		const prefix string = ",\"votes\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.Votes))
+	}
+	if in.Slug != "" {
+		const prefix string = ",\"slug\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Slug))
+	}
+	if true {
+		const prefix string = ",\"created\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Raw((in.Created).MarshalJSON())
+	}
+	out.RawByte('}')
+}
+func easyjson5a72dc82DecodeTparkDbModels3(in *jlexer.Lexer, out *User) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "nickname":
+			out.Nickname = string(in.String())
+		case "fullname":
+			out.Fullname = string(in.String())
+		case "about":
+			out.About = string(in.String())
+		case "email":
+			out.Email = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson5a72dc82EncodeTparkDbModels3(out *jwriter.Writer, in User) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.Nickname != "" {
+		const prefix string = ",\"nickname\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Nickname))
+	}
+	{
+		const prefix string = ",\"fullname\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Fullname))
+	}
+	if in.About != "" {
+		const prefix string = ",\"about\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.About))
+	}
+	{
+		const prefix string = ",\"email\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Email))
+	}
+	out.RawByte('}')
+}
+func easyjson5a72dc82DecodeTparkDbModels5(in *jlexer.Lexer, out *Post) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.Id = int64(in.Int64())
 		case "parent":
-			out.Parent = int(in.Int())
+			out.Parent = int64(in.Int64())
 		case "author":
 			out.Author = string(in.String())
 		case "message":
@@ -352,7 +568,7 @@ func easyjson5a72dc82DecodeTparkDbModels3(in *jlexer.Lexer, out *Post) {
 		in.Consumed()
 	}
 }
-func easyjson5a72dc82EncodeTparkDbModels3(out *jwriter.Writer, in Post) {
+func easyjson5a72dc82EncodeTparkDbModels5(out *jwriter.Writer, in Post) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -364,7 +580,7 @@ func easyjson5a72dc82EncodeTparkDbModels3(out *jwriter.Writer, in Post) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Int(int(in.Id))
+		out.Int64(int64(in.Id))
 	}
 	if in.Parent != 0 {
 		const prefix string = ",\"parent\":"
@@ -374,7 +590,7 @@ func easyjson5a72dc82EncodeTparkDbModels3(out *jwriter.Writer, in Post) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Int(int(in.Parent))
+		out.Int64(int64(in.Parent))
 	}
 	{
 		const prefix string = ",\"author\":"
@@ -442,23 +658,23 @@ func easyjson5a72dc82EncodeTparkDbModels3(out *jwriter.Writer, in Post) {
 // MarshalJSON supports json.Marshaler interface
 func (v Post) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson5a72dc82EncodeTparkDbModels3(&w, v)
+	easyjson5a72dc82EncodeTparkDbModels5(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Post) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson5a72dc82EncodeTparkDbModels3(w, v)
+	easyjson5a72dc82EncodeTparkDbModels5(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Post) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson5a72dc82DecodeTparkDbModels3(&r, v)
+	easyjson5a72dc82DecodeTparkDbModels5(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Post) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson5a72dc82DecodeTparkDbModels3(l, v)
+	easyjson5a72dc82DecodeTparkDbModels5(l, v)
 }

@@ -12,7 +12,7 @@ import (
 func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 
-	slug_or_id := ctx.UserValue("slug_or_id").(string)
+	slugOrID := ctx.UserValue("slug_or_id").(string)
 	posts := models.Posts{}
 	err := posts.UnmarshalJSON(ctx.PostBody())
 	if err != nil {
@@ -20,7 +20,7 @@ func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBodyString(err.Error())
 		return
 	}
-	result, err := helpers.ThreadCreateHelper(&posts, slug_or_id)
+	result, err := helpers.ThreadCreateHelper(&posts, slugOrID)
 
 	switch err {
 	case nil:
@@ -33,7 +33,7 @@ func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 	case errors.ThreadNotFound:
 		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
 		errorResp := errors.Error{
-			Message: fmt.Sprintf("Can't find thread by slug or id: %s", slug_or_id),
+			Message: fmt.Sprintf("Can't find thread by slug or id: %s", slugOrID),
 		}
 		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
@@ -51,7 +51,27 @@ func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 }
 
 func ThreadGetOneHandler(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
 
+	slugOrID := ctx.UserValue("slug_or_id").(string)
+
+	result, err := helpers.GetThreadBySlugOrId(slugOrID)
+	switch err {
+	case nil:
+		ctx.SetStatusCode(fasthttp.StatusOK) // 200
+		buf, _ := result.MarshalJSON()
+		ctx.SetBody(buf)
+	case errors.ThreadNotFound:
+		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
+		errorResp := errors.Error{
+			Message: fmt.Sprintf("Can't find thread by slug or id: %s", slugOrID),
+		}
+		buf, _ := errorResp.MarshalJSON()
+		ctx.SetBody(buf)
+	default:
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
+		ctx.SetBodyString(err.Error())
+	}
 }
 
 func ThreadGetPosts(ctx *fasthttp.RequestCtx) {

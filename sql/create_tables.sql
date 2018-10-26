@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS posts (
   "message"  TEXT           NOT NULL,
   "parent"   INTEGER        DEFAULT 0,
   "thread"   INTEGER        NOT NULL REFERENCES threads ("id"),
-  "path"     INTEGER[]
+  "path"     BIGINT []
 );
 
 -- TABLE "votes" --

@@ -43,7 +43,7 @@ func easyjsonC8d74561DecodeTparkDbModels(in *jlexer.Lexer, out *Forum) {
 		case "slug":
 			out.Slug = string(in.String())
 		case "posts":
-			out.Posts = int(in.Int())
+			out.Posts = int64(in.Int64())
 		case "threads":
 			out.Threads = int(in.Int())
 		default:
@@ -98,7 +98,7 @@ func easyjsonC8d74561EncodeTparkDbModels(out *jwriter.Writer, in Forum) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Int(int(in.Posts))
+		out.Int64(int64(in.Posts))
 	}
 	if in.Threads != 0 {
 		const prefix string = ",\"threads\":"
