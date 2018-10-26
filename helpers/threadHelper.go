@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"tpark_db/database"
@@ -29,82 +28,33 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 	for _, post := range *posts {
 		var rows *pgx.Row
 
-		if post.Parent != 0 {
-			rows = tx.QueryRow(`
-			SELECT path
-			FROM posts
-			WHERE id = $1`,
-				&post.Parent)
-			fmt.Println(post.Parent)
-
-			var path []int64
-			err := rows.Scan(&path)
-			if err != nil {
-				return nil, err
-			}
-			path = append(path, post.Parent)
-			fmt.Println(path)
-
-			rows = tx.QueryRow(`
+		rows = tx.QueryRow(`
 				INSERT
 				INTO posts (author, created, message, thread, parent, forum, path)
-				VALUES ($1, $2, $3, $4, $5, $6, $7) 
+				VALUES ($1, $2, $3, $4, $5, $6, (SELECT path FROM posts WHERE id = $5) || (select currval(pg_get_serial_sequence('posts', 'id'))) )
 				RETURNING author, created, forum, id, message, parent, thread`,
-				post.Author,
-				created,
-				post.Message,
-				threadByID.Id,
-				post.Parent,
-				threadByID.Forum,
-				path,
-			)
+			post.Author,
+			created,
+			post.Message,
+			threadByID.Id,
+			post.Parent,
+			threadByID.Forum,
+		)
 
-			insertedPost := models.Post{}
-			err = rows.Scan(
-				&insertedPost.Author,
-				&insertedPost.Created,
-				&insertedPost.Forum,
-				&insertedPost.Id,
-				&insertedPost.Message,
-				&insertedPost.Parent,
-				&insertedPost.Thread,
-			)
-
-			if err != nil {
-				return nil, err
-			}
-			insertedPosts = append(insertedPosts, &insertedPost)
-		} else {
-			path := []int64{post.Parent}
-			rows = tx.QueryRow(`
-				INSERT
-				INTO posts (author, created, message, thread, parent, forum, path)
-				VALUES ($1, $2, $3, $4, $5, $6, $7) 
-				RETURNING author, created, forum, id, message, parent, thread`,
-				post.Author,
-				created,
-				post.Message,
-				threadByID.Id,
-				post.Parent,
-				threadByID.Forum,
-				path,
-			)
-
-			insertedPost := models.Post{}
-			err := rows.Scan(
-				&insertedPost.Author,
-				&insertedPost.Created,
-				&insertedPost.Forum,
-				&insertedPost.Id,
-				&insertedPost.Message,
-				&insertedPost.Parent,
-				&insertedPost.Thread,
-			)
-			if err != nil {
-				return nil, err
-			}
-			insertedPosts = append(insertedPosts, &insertedPost)
+		insertedPost := models.Post{}
+		err := rows.Scan(
+			&insertedPost.Author,
+			&insertedPost.Created,
+			&insertedPost.Forum,
+			&insertedPost.Id,
+			&insertedPost.Message,
+			&insertedPost.Parent,
+			&insertedPost.Thread,
+		)
+		if err != nil {
+			return nil, err
 		}
+		insertedPosts = append(insertedPosts, &insertedPost)
 	}
 
 	database.CommitTransaction(tx)
