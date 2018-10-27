@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"bytes"
 	"strconv"
 	"time"
 	"tpark_db/database"
@@ -184,72 +185,105 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 	return &editedThread, nil
 }
 
-func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.Threads, error) {
-	// thread, err := GetThreadBySlugOrId(slugOrID)
-	// if err != nil {
-	// 	return nil, err
-	// }
+func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.Posts, error) {
+	thread, err := GetThreadBySlugOrId(slugOrID)
+	if err != nil {
+		return nil, err
+	}
 
-	// tx := database.StartTransaction()
-	// defer tx.Rollback()
-	// var queryRows *pgx.Rows
-	// var err error
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+	var queryRows *pgx.Rows
 
-	// if since != nil {
-	// 	if bytes.Equal([]byte("true"), desc) {
-	// 		queryRows, err = tx.Query(`
-	// 			SELECT nickname, fullname, about, email
-	// 			FROM users
-	// 			WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
-	// 			ORDER BY created DESC
-	// 			LIMIT $3::TEXT::INTEGER`,
-	// 			slug, since, limit)
-	// 	} else {
-	// 		queryRows, err = tx.Query(`
-	// 			SELECT nickname, fullname, about, email
-	// 			FROM users
-	// 			WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
-	// 			ORDER BY created
-	// 			LIMIT $3::TEXT::INTEGER`,
-	// 			slug, since, limit)
-	// 	}
-	// } else {
-	// 	if bytes.Equal([]byte("true"), desc) {
-	// 		queryRows, err = tx.Query(`
-	// 			SELECT nickname, fullname, about, email
-	// 			FROM users
-	// 			WHERE forum = $1
-	// 			ORDER BY created DESC
-	// 			LIMIT $2::TEXT::INTEGER`,
-	// 			slug, limit)
-	// 	} else {
-	// 		queryRows, err = tx.Query(`
-	// 			SELECT author, created, forum, id, message, slug, title, votes
-	// 			FROM threads
-	// 			WHERE forum = $1
-	// 			ORDER BY created
-	// 			LIMIT $2::TEXT::INTEGER`,
-	// 			slug, limit)
-	// 	}
-	// }
-	// defer queryRows.Close()
+	if since != nil {
+		if bytes.Equal([]byte("true"), desc) {
+			switch string(sort) {
+			case "flat":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 AND id < $2
+					ORDER BY id DESC
+					LIMIT $3::TEXT::INTEGER`,
+					thread.Id, since, limit)
+			case "tree":
+				//TODO
+			case "parent_tree":
+				//TODO
+			}
+		} else {
+			switch string(sort) {
+			case "flat":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 AND id > $2
+					ORDER BY id
+					LIMIT $3::TEXT::INTEGER`,
+					thread.Id, since, limit)
+			case "tree":
+				//TODO
+			case "parent_tree":
+				//TODO
+			}
+		}
+	} else {
+		if bytes.Equal([]byte("true"), desc) {
+			switch string(sort) {
+			case "flat":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1
+					ORDER BY id DESC
+					LIMIT $2::TEXT::INTEGER`,
+					thread.Id, limit)
+			case "tree":
+				//TODO
+			case "parent_tree":
+				//TODO
+			}
+		} else {
+			switch string(sort) {
+			case "flat":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 
+					ORDER BY id
+					LIMIT $2::TEXT::INTEGER`,
+					thread.Id, limit)
+			case "tree":
+				//TODO
+			case "parent_tree":
+				//TODO
+			}
+		}
+	}
+	defer queryRows.Close()
 
-	// if err != nil {
-	// 	return nil, errors.UserNotFound
-	// }
+	if err != nil {
+		return nil, errors.ThreadNotFound
+	}
 
-	// users := models.Users{}
-	// for queryRows.Next() {
-	// 	user := models.User{}
+	posts := models.Posts{}
+	for queryRows.Next() {
+		post := models.Post{}
 
-	// 	if err = queryRows.Scan(&user.Nickname, &user.Fullname, &user.About,
-	// 		&user.Email); err != nil {
-	// 		fmt.Println(err)
-	// 	}
-	// 	users = append(users, &user)
-	// }
+		if err = queryRows.Scan(
+			&post.Id,
+			&post.Author,
+			&post.Parent,
+			&post.Message,
+			&post.Forum,
+			&post.Thread,
+			&post.Created,
+		); err != nil {
+		}
+		posts = append(posts, &post)
+	}
 
-	// if len(users) == 0 {
+	// if len(posts) == 0 {
 	// 	_, err := ForumGetBySlug(slug)
 	// 	if err != nil {
 	// 		fmt.Println(err)
@@ -257,6 +291,6 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.T
 	// 	}
 	// }
 
-	// database.CommitTransaction(tx)
-	return nil, errors.ThreadNotFound
+	database.CommitTransaction(tx)
+	return &posts, nil
 }
