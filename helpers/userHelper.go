@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"log"
 	"tpark_db/database"
 	"tpark_db/errors"
 	"tpark_db/models"
@@ -20,7 +19,6 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 		&u.Nickname, &u.Fullname, &u.About, &u.Email)
 
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
@@ -35,7 +33,6 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 		defer queryRows.Close()
 
 		if err != nil {
-			log.Println(err)
 			return nil, err
 		}
 
@@ -58,12 +55,18 @@ func UserGetOneHelper(username string) (models.User, error) {
 
 	user := models.User{}
 
-	if err := tx.QueryRow(`
+	err := tx.QueryRow(`
 		SELECT "nickname", "fullname", "about", "email"
 		FROM users
 		WHERE "nickname" = $1`,
-		username).Scan(&user.Nickname, &user.Fullname, &user.About, &user.Email); err != nil {
-		log.Println(err)
+		username).Scan(
+		&user.Nickname,
+		&user.Fullname,
+		&user.About,
+		&user.Email,
+	)
+
+	if err != nil {
 		return user, errors.UserNotFound
 	}
 
@@ -84,7 +87,12 @@ func UserUpdateHelper(user *models.User) error {
 		RETURNING fullname, about, email, nickname`,
 		&user.Nickname, &user.Fullname, &user.About, &user.Email)
 
-	err := rows.Scan(&user.Fullname, &user.About, &user.Email, &user.Nickname)
+	err := rows.Scan(
+		&user.Fullname,
+		&user.About,
+		&user.Email,
+		&user.Nickname,
+	)
 
 	if err != nil {
 		if _, ok := err.(pgx.PgError); ok {

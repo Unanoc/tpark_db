@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"bytes"
-	"fmt"
 	"tpark_db/database"
 	"tpark_db/errors"
 	"tpark_db/models"
@@ -110,6 +109,7 @@ func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threads, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
+
 	var queryRows *pgx.Rows
 	var err error
 
@@ -160,18 +160,22 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 	for queryRows.Next() {
 		thread := models.Thread{}
 
-		if err = queryRows.Scan(&thread.Author, &thread.Created, &thread.Forum,
-			&thread.Id, &thread.Message, &thread.Slug, &thread.Title,
-			&thread.Votes); err != nil {
-			fmt.Println(err)
-		}
+		_ = queryRows.Scan(
+			&thread.Author,
+			&thread.Created,
+			&thread.Forum,
+			&thread.Id,
+			&thread.Message,
+			&thread.Slug,
+			&thread.Title,
+			&thread.Votes)
+
 		threads = append(threads, &thread)
 	}
 
 	if len(threads) == 0 {
 		_, err := ForumGetBySlug(slug)
 		if err != nil {
-			fmt.Println(err)
 			return nil, errors.ForumNotFound
 		}
 	}
@@ -181,10 +185,14 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 }
 
 func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users, error) {
+	_, err := ForumGetBySlug(slug)
+	if err != nil {
+		return nil, err
+	}
+
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 	var queryRows *pgx.Rows
-	var err error
 
 	if since != nil {
 		if bytes.Equal([]byte("true"), desc) {
@@ -251,20 +259,18 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 	for queryRows.Next() {
 		user := models.User{}
 
-		if err = queryRows.Scan(
+		err = queryRows.Scan(
 			&user.Nickname,
 			&user.Fullname,
 			&user.About,
-			&user.Email); err != nil {
-			fmt.Println(err)
-		}
+			&user.Email)
+
 		users = append(users, &user)
 	}
 
 	if len(users) == 0 {
 		_, err := ForumGetBySlug(slug)
 		if err != nil {
-			fmt.Println(err)
 			return nil, errors.UserNotFound
 		}
 	}
