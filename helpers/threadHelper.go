@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"time"
 	"tpark_db/database"
@@ -198,54 +199,58 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 	if since != nil {
 		if bytes.Equal([]byte("true"), desc) {
 			switch string(sort) {
+			// case "tree":
+			// 	//TODO
+			// case "parent_tree":
+			// 	//TODO
 			case "flat":
 				queryRows, err = tx.Query(`
-					SELECT id, author, parent, message, forum, thread, created
+					SELECT id, author, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND id < $2
 					ORDER BY id DESC
 					LIMIT $3::TEXT::INTEGER`,
 					thread.Id, since, limit)
-			case "tree":
-				//TODO
-			case "parent_tree":
-				//TODO
 			}
 		} else {
 			switch string(sort) {
-			case "flat":
+			// case "tree":
+			// 	//TODO
+			// case "parent_tree":
+			// 	//TODO
+			default:
 				queryRows, err = tx.Query(`
-					SELECT id, author, parent, message, forum, thread, created
+					SELECT id, author, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND id > $2
 					ORDER BY id
 					LIMIT $3::TEXT::INTEGER`,
 					thread.Id, since, limit)
-			case "tree":
-				//TODO
-			case "parent_tree":
-				//TODO
 			}
 		}
 	} else {
 		if bytes.Equal([]byte("true"), desc) {
 			switch string(sort) {
-			case "flat":
+			// case "tree":
+			// 	//TODO
+			// case "parent_tree":
+			// 	//TODO
+			default:
 				queryRows, err = tx.Query(`
-					SELECT id, author, parent, message, forum, thread, created
+					SELECT id, author, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1
 					ORDER BY id DESC
 					LIMIT $2::TEXT::INTEGER`,
 					thread.Id, limit)
-			case "tree":
-				//TODO
-			case "parent_tree":
-				//TODO
 			}
 		} else {
 			switch string(sort) {
-			case "flat":
+			// case "tree":
+			// 	//TODO
+			// case "parent_tree":
+			// 	//TODO
+			default:
 				queryRows, err = tx.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
@@ -253,10 +258,6 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					ORDER BY id
 					LIMIT $2::TEXT::INTEGER`,
 					thread.Id, limit)
-			case "tree":
-				//TODO
-			case "parent_tree":
-				//TODO
 			}
 		}
 	}
@@ -279,17 +280,10 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 			&post.Thread,
 			&post.Created,
 		); err != nil {
+			fmt.Println(err)
 		}
 		posts = append(posts, &post)
 	}
-
-	// if len(posts) == 0 {
-	// 	_, err := ForumGetBySlug(slug)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return nil, errors.UserNotFound
-	// 	}
-	// }
 
 	database.CommitTransaction(tx)
 	return &posts, nil
