@@ -203,7 +203,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 			// 	//TODO
 			// case "parent_tree":
 			// 	//TODO
-			case "flat":
+			default:
 				queryRows, err = tx.Query(`
 					SELECT id, author, message, forum, thread, created
 					FROM posts
@@ -231,13 +231,30 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 	} else {
 		if bytes.Equal([]byte("true"), desc) {
 			switch string(sort) {
-			// case "tree":
-			// 	//TODO
-			// case "parent_tree":
-			// 	//TODO
+			case "tree":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 
+					ORDER BY path DESC
+					LIMIT $2::TEXT::INTEGER`,
+					thread.Id, limit)
+			case "parent_tree":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 AND parent IN (
+						SELECT parent 
+						FROM posts 
+						WHERE thread = $1 
+						ORDER BY parent DESC
+						LIMIT $2::TEXT::INTEGER
+					)
+					ORDER BY parent DESC, id ASC`,
+					thread.Id, limit)
 			default:
 				queryRows, err = tx.Query(`
-					SELECT id, author, message, forum, thread, created
+					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1
 					ORDER BY id DESC
@@ -246,10 +263,27 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 			}
 		} else {
 			switch string(sort) {
-			// case "tree":
-			// 	//TODO
-			// case "parent_tree":
-			// 	//TODO
+			case "tree":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 
+					ORDER BY path
+					LIMIT $2::TEXT::INTEGER`,
+					thread.Id, limit)
+			case "parent_tree":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 AND parent IN (
+						SELECT parent 
+						FROM posts 
+						WHERE thread = $1 
+						ORDER BY parent 
+						LIMIT $2::TEXT::INTEGER
+					)
+					ORDER BY path`,
+					thread.Id, limit)
 			default:
 				queryRows, err = tx.Query(`
 					SELECT id, author, parent, message, forum, thread, created
