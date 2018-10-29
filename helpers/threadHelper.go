@@ -205,7 +205,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 			// 	//TODO
 			default:
 				queryRows, err = tx.Query(`
-					SELECT id, author, message, forum, thread, created
+					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND id < $2
 					ORDER BY id DESC
@@ -214,15 +214,32 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 			}
 		} else {
 			switch string(sort) {
-			// case "tree":
-			// 	//TODO
-			// case "parent_tree":
-			// 	//TODO
+			case "tree":
+				queryRows, err = tx.Query(`
+					SELECT id, author, parent, message, forum, thread, created
+					FROM posts
+					WHERE thread = $1 AND (path > (SELECT path FROM posts WHERE id = $2::TEXT::INTEGER))
+					ORDER BY path
+					LIMIT $3::TEXT::INTEGER`,
+					thread.Id, since, limit)
+			case "parent_tree":
+				queryRows, err = tx.Query(`
+				SELECT id, author, parent, message, forum, thread, created
+				FROM posts
+				WHERE thread = $1 AND parent IN (
+					SELECT parent 
+					FROM posts 
+					WHERE thread = $1 id > $2::TEXT::INTEGER
+					ORDER BY parent 
+					LIMIT $3::TEXT::INTEGER
+				)
+				ORDER BY path`,
+					thread.Id, since, limit)
 			default:
 				queryRows, err = tx.Query(`
-					SELECT id, author, message, forum, thread, created
+					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
-					WHERE thread = $1 AND id > $2
+					WHERE thread = $1 AND id > $2::TEXT::INTEGER
 					ORDER BY id
 					LIMIT $3::TEXT::INTEGER`,
 					thread.Id, since, limit)
@@ -242,15 +259,10 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 			case "parent_tree":
 				queryRows, err = tx.Query(`
 					SELECT id, author, parent, message, forum, thread, created
-					FROM posts
-					WHERE thread = $1 AND parent IN (
-						SELECT parent 
-						FROM posts 
-						WHERE thread = $1 
-						ORDER BY parent DESC
-						LIMIT $2::TEXT::INTEGER
-					)
-					ORDER BY parent DESC, id ASC`,
+					FROM posts 
+					WHERE thread = $1 
+					ORDER BY path[1] DESC, array_length(path, 1), path[2]
+					LIMIT $2::TEXT::INTEGER`,
 					thread.Id, limit)
 			default:
 				queryRows, err = tx.Query(`
@@ -279,7 +291,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 						SELECT parent 
 						FROM posts 
 						WHERE thread = $1 
-						ORDER BY parent 
+						ORDER BY path 
 						LIMIT $2::TEXT::INTEGER
 					)
 					ORDER BY path`,
@@ -298,7 +310,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 	defer queryRows.Close()
 
 	if err != nil {
-		return nil, errors.ThreadNotFound
+		return nil, err
 	}
 
 	posts := models.Posts{}
