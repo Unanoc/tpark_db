@@ -49,7 +49,7 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 	return nil, nil
 }
 
-func UserGetOneHelper(username string) (models.User, error) {
+func UserGetOneHelper(username string) (*models.User, error) {
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
@@ -67,11 +67,11 @@ func UserGetOneHelper(username string) (models.User, error) {
 	)
 
 	if err != nil {
-		return user, errors.UserNotFound
+		return nil, errors.UserNotFound
 	}
 
 	database.CommitTransaction(tx)
-	return user, nil
+	return &user, nil
 }
 
 func UserUpdateHelper(user *models.User) error {
