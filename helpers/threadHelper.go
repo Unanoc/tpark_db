@@ -334,3 +334,47 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 	database.CommitTransaction(tx)
 	return &posts, nil
 }
+
+func ThreadUpdateHelper(thread *models.ThreadUpdate, slugOrID string) (*models.Thread, error) {
+	threadFound, err := GetThreadBySlugOrId(slugOrID)
+	if err != nil {
+		return nil, err
+	}
+
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+
+	updatedThread := models.Thread{}
+
+	rows := tx.QueryRow(`
+		UPDATE threads
+		SET title = coalesce(nullif($2, ''), title),
+			message = coalesce(nullif($3, ''), message)
+		WHERE slug = $1
+		RETURNING id, title, author, forum, message, votes, slug, created`,
+		&threadFound.Slug,
+		&thread.Title,
+		&thread.Message)
+
+	err = rows.Scan(
+		&updatedThread.Id,
+		&updatedThread.Title,
+		&updatedThread.Author,
+		&updatedThread.Forum,
+		&updatedThread.Message,
+		&updatedThread.Votes,
+		&updatedThread.Slug,
+		&updatedThread.Created,
+	)
+
+	if err != nil {
+		// if _, ok := err.(pgx.PgError); ok {
+		// 	return nil, errors.UserUpdateConflict
+		// }
+		// return nil, errors.UserNotFound
+		return nil, err
+	}
+
+	database.CommitTransaction(tx)
+	return &updatedThread, nil
+}
