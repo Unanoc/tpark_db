@@ -12,6 +12,50 @@ import (
 	"github.com/jackc/pgx"
 )
 
+func ParentNotExists(parent int64) bool {
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+
+	if parent == 0 {
+		return false
+	}
+
+	var t int
+	rows := tx.QueryRow(`
+		SELECT id
+		FROM posts
+		WHERE id = $1`,
+		parent)
+
+	if err := rows.Scan(&t); err != nil {
+		return true
+	}
+	database.CommitTransaction(tx)
+	return false
+}
+
+func ParentExitsInOtherThread(parent int64, threadID int) bool {
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+
+	var t int
+	rows := tx.QueryRow(`
+		SELECT id
+		FROM posts
+		WHERE id = $1 AND thread IN (SELECT id FROM threads WHERE thread <> $2)`,
+		parent, threadID)
+
+	if err := rows.Scan(&t); err != nil {
+		if err.Error() == "no rows in result set" {
+			return false
+		}
+		return true
+	}
+
+	database.CommitTransaction(tx)
+	return true
+}
+
 func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, error) {
 	if len(*posts) == 0 {
 		return nil, errors.NoPostsForCreate
@@ -29,6 +73,10 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 	insertedPosts := models.Posts{}
 	for _, post := range *posts {
 		var rows *pgx.Row
+
+		if ParentExitsInOtherThread(post.Parent, threadByID.Id) || ParentNotExists(post.Parent) {
+			return nil, errors.PostParentNotFound
+		}
 
 		rows = tx.QueryRow(`
 				INSERT

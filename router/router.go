@@ -19,8 +19,8 @@ func NewRouter() *fasthttprouter.Router {
 	router.GET("/api/forum/:slug/threads", forum.ForumGetThreadsHandler) //done
 	router.GET("/api/forum/:slug/users", forum.ForumGetUsersHandler) //done
 
-	router.GET("/api/post/:id/details", post.PostGetOneHandler)
-	router.POST("/api/post/:id/details", post.PostUpdateHandler)
+	router.GET("/api/post/:id/details", post.PostGetOneHandler) //done
+	router.POST("/api/post/:id/details", post.PostUpdateHandler) //done
 
 	router.GET("/api/service/status", service.StatusHandler) //done
 	router.POST("/api/service/clear", service.ClearHandler) //done
