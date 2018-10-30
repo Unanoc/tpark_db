@@ -60,7 +60,7 @@ func ForumGetBySlug(slug string) (*models.Forum, error) {
 		&forum.Threads)
 
 	if err != nil {
-		return &forum, errors.ForumNotFound
+		return nil, errors.ForumNotFound
 	}
 
 	database.CommitTransaction(tx)

@@ -11,7 +11,6 @@ import (
 func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 	postID, err := strconv.Atoi(id)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -46,10 +45,8 @@ func PostGetOneById(id int) (*models.Post, error) {
 
 	post := models.Post{}
 
-	rows := tx.QueryRow(` 
-		SELECT id, author, message, forum, thread, created, isEdited
-		FROM posts
-		WHERE id = $1`,
+	sql := "SELECT id, author, \"message\", forum, thread, created, \"isEdited\" FROM posts WHERE id = $1"
+	rows := tx.QueryRow(sql,
 		id)
 
 	err := rows.Scan(
@@ -63,7 +60,10 @@ func PostGetOneById(id int) (*models.Post, error) {
 	)
 
 	if err != nil {
-		return nil, errors.PostNotFound
+		if err.Error() == "no rows in result set" {
+			return nil, errors.PostNotFound
+		}
+		return nil, err
 	}
 
 	database.CommitTransaction(tx)
@@ -81,24 +81,27 @@ func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Pos
 		return nil, errors.PostNotFound
 	}
 
-	if len(postUpdate.Message) != 0 && (post.Message != postUpdate.Message) {
-		post.Message = postUpdate.Message
-		post.IsEdited = true
-	} else {
-		return post, nil
-	}
-
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
-	_, err = tx.Exec(`
-		UPDATE posts
-		SET message = coalesce(nullif($2, ''), message),
-			isEdited = TRUE
-		WHERE id = $1`,
+	sql := "UPDATE posts SET \"message\" = COALESCE($2, \"message\"), \"isEdited\" = ($2 IS NOT NULL AND $2 <> \"message\") WHERE id = $1 RETURNING author::text, created, forum, \"isEdited\", thread, \"message\""
+	rows := tx.QueryRow(sql,
 		postID, &postUpdate.Message)
 
+	err = rows.Scan(
+		&post.Author,
+		&post.Created,
+		&post.Forum,
+		&post.IsEdited,
+		&post.Thread,
+		&post.Message,
+	)
+
 	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, errors.PostNotFound
+		}
+		fmt.Println(err)
 		return nil, err
 	}
 
