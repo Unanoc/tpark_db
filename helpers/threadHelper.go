@@ -56,14 +56,36 @@ func ParentExitsInOtherThread(parent int64, threadID int) bool {
 	return true
 }
 
-func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, error) {
-	if len(*posts) == 0 {
-		return nil, errors.NoPostsForCreate
+func AuthorExists(author string) bool {
+	tx := database.StartTransaction()
+	defer tx.Rollback()
+
+	var nickname string
+	rows := tx.QueryRow(`
+		SELECT nickname
+		FROM users
+		WHERE nickname = $1`,
+		author)
+
+	if err := rows.Scan(&nickname); err != nil {
+		if err.Error() == "no rows in result set" {
+			return true
+		}
+		return false
 	}
 
+	database.CommitTransaction(tx)
+	return false
+}
+
+func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, error) {
 	threadByID, err := GetThreadBySlugOrId(slugOrID)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(*posts) == 0 {
+		return nil, errors.NoPostsForCreate
 	}
 
 	tx := database.StartTransaction()
@@ -73,6 +95,10 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 	insertedPosts := models.Posts{}
 	for _, post := range *posts {
 		var rows *pgx.Row
+
+		if AuthorExists(post.Author) {
+			return nil, errors.UserNotFound
+		}
 
 		if ParentExitsInOtherThread(post.Parent, threadByID.Id) || ParentNotExists(post.Parent) {
 			return nil, errors.PostParentNotFound

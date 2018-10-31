@@ -37,6 +37,13 @@ func ThreadCreateHandler(ctx *fasthttp.RequestCtx) {
 		}
 		buf, _ := errorResp.MarshalJSON()
 		ctx.SetBody(buf)
+	case errors.UserNotFound:
+		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
+		errorResp := errors.Error{
+			Message: fmt.Sprintf("Can't find author"),
+		}
+		buf, _ := errorResp.MarshalJSON()
+		ctx.SetBody(buf)
 	case errors.PostParentNotFound:
 		ctx.SetStatusCode(fasthttp.StatusConflict) // 409
 		errorResp := errors.Error{
