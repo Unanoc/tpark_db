@@ -1,3 +1,3 @@
 #!/bin/bash
 
-psql forum -f ../sql/create_tables.sql
+psql apiforum -f ../sql/create_tables.sql
