@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"strconv"
 	"tpark_db/database"
 	"tpark_db/errors"
@@ -18,6 +17,8 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 
 	for _, typeObject := range related {
 		switch typeObject {
+		case "post":
+			postFull.Post, err = PostGetOneById(postID)
 		case "thread":
 			threadID := strconv.Itoa(postFull.Post.Thread)
 			postFull.Thread, err = GetThreadBySlugOrId(threadID)
@@ -27,8 +28,6 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 		case "user":
 			userNickname := postFull.Post.Author
 			postFull.Author, err = UserGetOneHelper(userNickname)
-		default:
-			postFull.Post, err = PostGetOneById(postID)
 		}
 
 		if err != nil {
@@ -81,6 +80,10 @@ func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Pos
 		return nil, errors.PostNotFound
 	}
 
+	if len(postUpdate.Message) == 0 {
+		return post, nil
+	}
+
 	tx := database.StartTransaction()
 	defer tx.Rollback()
 
@@ -101,7 +104,6 @@ func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Pos
 		if err.Error() == "no rows in result set" {
 			return nil, errors.PostNotFound
 		}
-		fmt.Println(err)
 		return nil, err
 	}
 

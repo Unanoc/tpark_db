@@ -15,7 +15,8 @@ func PostGetOneHandler(ctx *fasthttp.RequestCtx) {
 
 	postID := ctx.UserValue("id").(string)
 	relatedString := ctx.FormValue("related")
-	relatedParams := strings.Split(string(relatedString), ",")
+	relatedParams := []string{"post"}
+	relatedParams = append(relatedParams, strings.Split(string(relatedString), ",")...)
 	result, err := helpers.PostFullHelper(postID, relatedParams)
 
 	switch err {
