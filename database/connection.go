@@ -20,7 +20,7 @@ var pgxConfig = pgx.ConnConfig{
 	FallbackTLSConfig: nil,
 }
 
-const CreateeSchema = "./sql/create_tables.sql"
+const CreateSchema = "./sql/create_tables.sql"
 const ClearSchema = "./sql/erase_tables.sql"
 
 func Connect() {
@@ -33,7 +33,7 @@ func Connect() {
 		log.Fatalln(err) // Fatalln is equivalent to Println() followed by a call to os.Exit(1)
 	}
 
-	if err = ExecSQLScript(CreateeSchema); err != nil {
+	if err = ExecSQLScript(CreateSchema); err != nil {
 		log.Println(err)
 	}
 	log.Println("SQL Schema was initialized successfully")
