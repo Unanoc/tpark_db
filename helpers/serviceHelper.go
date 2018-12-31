@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"io/ioutil"
 	"log"
 	"sync"
 	"tpark_db/database"
@@ -11,11 +12,9 @@ func getCountOfTable(wg *sync.WaitGroup, table string, status *models.Status) {
 	defer wg.Done()
 	queryString := "SELECT COUNT(*) FROM " + table
 	var count int
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-	rows := tx.QueryRow(queryString)
+	rows := database.DB.Conn.QueryRow(queryString)
 	_ = rows.Scan(&count)
-	database.CommitTransaction(tx)
+
 	switch table {
 	case "users":
 		status.User = count
@@ -30,6 +29,7 @@ func getCountOfTable(wg *sync.WaitGroup, table string, status *models.Status) {
 	}
 }
 
+// StatusHelper selects count of each table.
 func StatusHelper() (*models.Status, error) {
 	status := models.Status{}
 	listTables := []string{"users", "forums", "threads", "posts"}
@@ -40,4 +40,20 @@ func StatusHelper() (*models.Status, error) {
 	}
 	wg.Wait()
 	return &status, nil
+}
+
+// ExecSQLScript executes sql script.
+func ExecSQLScript(path string) error {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if _, err := database.DB.Conn.Exec(string(content)); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }

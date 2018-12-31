@@ -9,7 +9,7 @@ import (
 
 func ClearHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
-	if err := database.ExecSQLScript(database.ClearSchema); err != nil {
+	if err := helpers.ExecSQLScript(database.DB.SchemaPath); err != nil {
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
 		ctx.SetBodyString(err.Error())
 	} else {

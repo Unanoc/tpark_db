@@ -12,16 +12,13 @@ import (
 	"github.com/jackc/pgx"
 )
 
-func ParentNotExists(parent int64) bool {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
+func parentNotExists(parent int64) bool {
 	if parent == 0 {
 		return false
 	}
 
 	var t int
-	rows := tx.QueryRow(`
+	rows := database.DB.Conn.QueryRow(`
 		SELECT id
 		FROM posts
 		WHERE id = $1`,
@@ -30,16 +27,13 @@ func ParentNotExists(parent int64) bool {
 	if err := rows.Scan(&t); err != nil {
 		return true
 	}
-	database.CommitTransaction(tx)
+
 	return false
 }
 
-func ParentExitsInOtherThread(parent int64, threadID int) bool {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
+func parentExitsInOtherThread(parent int64, threadID int) bool {
 	var t int
-	rows := tx.QueryRow(`
+	rows := database.DB.Conn.QueryRow(`
 		SELECT id
 		FROM posts
 		WHERE id = $1 AND thread IN (SELECT id FROM threads WHERE thread <> $2)`,
@@ -52,16 +46,12 @@ func ParentExitsInOtherThread(parent int64, threadID int) bool {
 		return true
 	}
 
-	database.CommitTransaction(tx)
 	return true
 }
 
 func AuthorExists(author string) bool {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
 	var nickname string
-	rows := tx.QueryRow(`
+	rows := database.DB.Conn.QueryRow(`
 		SELECT nickname
 		FROM users
 		WHERE nickname = $1`,
@@ -74,12 +64,12 @@ func AuthorExists(author string) bool {
 		return false
 	}
 
-	database.CommitTransaction(tx)
 	return false
 }
 
+// ThreadCreateHelper inserts thread into table THREADS
 func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, error) {
-	threadByID, err := GetThreadBySlugOrId(slugOrID)
+	threadByID, err := GetThreadBySlugOrID(slugOrID)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +77,6 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 	if len(*posts) == 0 {
 		return nil, errors.NoPostsForCreate
 	}
-
-	tx := database.StartTransaction()
-	defer tx.Rollback()
 
 	created := time.Now()
 	insertedPosts := models.Posts{}
@@ -100,11 +87,11 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 			return nil, errors.UserNotFound
 		}
 
-		if ParentExitsInOtherThread(post.Parent, threadByID.Id) || ParentNotExists(post.Parent) {
+		if parentExitsInOtherThread(post.Parent, threadByID.Id) || parentNotExists(post.Parent) {
 			return nil, errors.PostParentNotFound
 		}
 
-		rows = tx.QueryRow(`
+		rows = database.DB.Conn.QueryRow(`
 				INSERT
 				INTO posts (author, created, message, thread, parent, forum, path)
 				VALUES ($1, $2, $3, $4, $5, $6, (SELECT path FROM posts WHERE id = $5) || (select currval(pg_get_serial_sequence('posts', 'id'))) )
@@ -133,20 +120,17 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 		insertedPosts = append(insertedPosts, &insertedPost)
 	}
 
-	database.CommitTransaction(tx)
 	return &insertedPosts, nil
 }
 
-func GetThreadBySlugOrId(slugOrId string) (*models.Thread, error) {
+// GetThreadBySlugOrID selects thread by id.
+func GetThreadBySlugOrID(slugOrID string) (*models.Thread, error) {
 	var err error
 	var thread models.Thread
 
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
-	if IsNumber(slugOrId) {
-		id, _ := strconv.Atoi(slugOrId)
-		rows := tx.QueryRow(` 
+	if IsNumber(slugOrID) {
+		id, _ := strconv.Atoi(slugOrID)
+		rows := database.DB.Conn.QueryRow(` 
 			SELECT id, title, author, forum, message, votes, slug, created
 			FROM threads
 			WHERE id = $1`, id)
@@ -156,10 +140,10 @@ func GetThreadBySlugOrId(slugOrId string) (*models.Thread, error) {
 			return nil, errors.ThreadNotFound
 		}
 	} else {
-		rows := tx.QueryRow(` 
+		rows := database.DB.Conn.QueryRow(` 
 			SELECT id, title, author, forum, message, votes, slug, created
 			FROM threads
-			WHERE slug = $1`, slugOrId)
+			WHERE slug = $1`, slugOrID)
 
 		err = rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes, &thread.Slug, &thread.Created)
 		if err != nil {
@@ -167,20 +151,17 @@ func GetThreadBySlugOrId(slugOrId string) (*models.Thread, error) {
 		}
 	}
 
-	database.CommitTransaction(tx)
 	return &thread, nil
 }
 
+// ThreadVoteHelper inserts votes into table VOTES.
 func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
 	_, err := UserGetOneHelper(v.Nickname)
 	if err != nil {
 		return nil, errors.ThreadNotFound
 	}
 	foundVote, _ := CheckThreadVotesByNickname(v.Nickname)
-	thread, err := GetThreadBySlugOrId(slugOrID)
+	thread, err := GetThreadBySlugOrID(slugOrID)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +171,7 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 	var threadVoices int
 
 	if foundVote == nil { // like by user did not exist
-		_, err = tx.Exec(`
+		_, err = database.DB.Conn.Exec(`
 			INSERT INTO votes (nickname, voice) VALUES ($1, $2)`,
 			&v.Nickname, &v.Voice)
 
@@ -200,7 +181,7 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 
 		threadVoices = thread.Votes + v.Voice // counting of votes
 
-		rows = tx.QueryRow(`
+		rows = database.DB.Conn.QueryRow(`
 			UPDATE threads
 			SET votes = $1
 			WHERE slug = $2
@@ -223,7 +204,7 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 	} else {
 		oldVote, _ := CheckThreadVotesByNickname(v.Nickname)
 
-		if _, err = tx.Exec(`
+		if _, err = database.DB.Conn.Exec(`
 			UPDATE votes 
 			SET voice = $2
 			WHERE nickname = $1`,
@@ -233,7 +214,7 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 
 		threadVoices = thread.Votes + v.Voice - oldVote.Voice // recounting of votes with old voice
 
-		rows = tx.QueryRow(`
+		rows = database.DB.Conn.QueryRow(`
 			UPDATE threads
 			SET votes = $1
 			WHERE slug = $2
@@ -256,25 +237,23 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 		}
 	}
 
-	database.CommitTransaction(tx)
 	return &editedThread, nil
 }
 
+// ThreadGetPosts selects posts from table POSTS with filters.
 func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.Posts, error) {
-	thread, err := GetThreadBySlugOrId(slugOrID)
+	thread, err := GetThreadBySlugOrID(slugOrID)
 	if err != nil {
 		return nil, err
 	}
 
-	tx := database.StartTransaction()
-	defer tx.Rollback()
 	var queryRows *pgx.Rows
 
 	if since != nil {
 		if bytes.Equal([]byte("true"), desc) {
 			switch string(sort) {
 			case "tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND (path < (SELECT path FROM posts WHERE id = $2::TEXT::INTEGER))
@@ -282,7 +261,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					LIMIT $3::TEXT::INTEGER`,
 					thread.Id, since, limit)
 			case "parent_tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE path[1] IN (
@@ -295,7 +274,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					ORDER BY path`,
 					thread.Id, since, limit)
 			default:
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND id < $2::TEXT::INTEGER
@@ -306,7 +285,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 		} else {
 			switch string(sort) {
 			case "tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND (path > (SELECT path FROM posts WHERE id = $2::TEXT::INTEGER))
@@ -314,7 +293,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					LIMIT $3::TEXT::INTEGER`,
 					thread.Id, since, limit)
 			case "parent_tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE path[1] IN (
@@ -326,7 +305,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					ORDER BY path`,
 					thread.Id, since, limit)
 			default:
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND id > $2::TEXT::INTEGER
@@ -339,7 +318,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 		if bytes.Equal([]byte("true"), desc) {
 			switch string(sort) {
 			case "tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 
@@ -347,7 +326,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					LIMIT $2::TEXT::INTEGER`,
 					thread.Id, limit)
 			case "parent_tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND path[1] IN (
@@ -361,7 +340,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					ORDER BY path[1] DESC, path;`,
 					thread.Id, limit)
 			default:
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1
@@ -372,7 +351,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 		} else {
 			switch string(sort) {
 			case "tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 
@@ -380,7 +359,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					LIMIT $2::TEXT::INTEGER`,
 					thread.Id, limit)
 			case "parent_tree":
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 AND path[1] IN (
@@ -394,7 +373,7 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 					ORDER BY path`,
 					thread.Id, limit)
 			default:
-				queryRows, err = tx.Query(`
+				queryRows, err = database.DB.Conn.Query(`
 					SELECT id, author, parent, message, forum, thread, created
 					FROM posts
 					WHERE thread = $1 
@@ -428,22 +407,19 @@ func ThreadGetPosts(slugOrID string, limit, since, sort, desc []byte) (*models.P
 		posts = append(posts, &post)
 	}
 
-	database.CommitTransaction(tx)
 	return &posts, nil
 }
 
+// ThreadUpdateHelper updates thread.
 func ThreadUpdateHelper(thread *models.ThreadUpdate, slugOrID string) (*models.Thread, error) {
-	threadFound, err := GetThreadBySlugOrId(slugOrID)
+	threadFound, err := GetThreadBySlugOrID(slugOrID)
 	if err != nil {
 		return nil, err
 	}
 
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
 	updatedThread := models.Thread{}
 
-	rows := tx.QueryRow(`
+	rows := database.DB.Conn.QueryRow(`
 		UPDATE threads
 		SET title = coalesce(nullif($2, ''), title),
 			message = coalesce(nullif($3, ''), message)
@@ -465,13 +441,8 @@ func ThreadUpdateHelper(thread *models.ThreadUpdate, slugOrID string) (*models.T
 	)
 
 	if err != nil {
-		// if _, ok := err.(pgx.PgError); ok {
-		// 	return nil, errors.UserUpdateConflict
-		// }
-		// return nil, errors.UserNotFound
 		return nil, err
 	}
 
-	database.CommitTransaction(tx)
 	return &updatedThread, nil
 }

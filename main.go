@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	port = ":5000"
+	port    = ":5000"
+	schema  = "./sql/create_tables.sql"
+	psqlURI = "postgres://apiforum:apiforum@localhost:5432/apiforum"
 )
 
 func loggerHandlerMiddleware(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
@@ -26,8 +28,9 @@ func loggerHandlerMiddleware(handler fasthttp.RequestHandler) fasthttp.RequestHa
 
 func main() {
 	// Initializing of Database Connection
-	database.Connect()
-	defer database.Disconnect()
+	database.DB.Connect(psqlURI)
+	defer database.DB.Disconnect()
+	database.DB.SchemaPath = schema
 
 	syscallChan := make(chan os.Signal, 1)
 	signal.Notify(syscallChan, syscall.SIGINT, syscall.SIGTERM)
@@ -35,7 +38,7 @@ func main() {
 	go func() {
 		<-syscallChan // goroutine will be frozed at here cause it will be wating until signal is received.
 		log.Println("Shutting down...")
-		database.Disconnect()
+		database.DB.Disconnect()
 		os.Exit(0)
 	}()
 

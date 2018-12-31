@@ -6,6 +6,7 @@ import (
 	"unicode"
 )
 
+// IsNumber checks if string is number.
 func IsNumber(s string) bool {
 	for _, c := range s {
 		if !unicode.IsDigit(c) {
@@ -15,11 +16,9 @@ func IsNumber(s string) bool {
 	return true
 }
 
+// CheckThreadVotesByNickname chechs if vote exists.
 func CheckThreadVotesByNickname(nickname string) (*models.Vote, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
-	rows := tx.QueryRow(` 
+	rows := database.DB.Conn.QueryRow(` 
 		SELECT nickname, voice
 		FROM votes
 		WHERE nickname = $1`,
@@ -31,6 +30,5 @@ func CheckThreadVotesByNickname(nickname string) (*models.Vote, error) {
 		return nil, err
 	}
 
-	database.CommitTransaction(tx)
 	return &vote, nil
 }

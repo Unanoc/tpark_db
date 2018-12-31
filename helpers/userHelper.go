@@ -8,11 +8,9 @@ import (
 	"github.com/jackc/pgx"
 )
 
+// UserCreateHelper inserts user into table USERS.
 func UserCreateHelper(u *models.User) (models.Users, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
-	rows, err := tx.Exec(`
+	rows, err := database.DB.Conn.Exec(`
 		INSERT
 		INTO users ("nickname", "fullname", "about", "email")
 		VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
@@ -24,7 +22,7 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 
 	if rows.RowsAffected() == 0 { // if it returns 0 - user existed, else user was created
 		users := models.Users{}
-		queryRows, err := tx.Query(`
+		queryRows, err := database.DB.Conn.Query(`
 			SELECT "nickname", "fullname", "about", "email"
 			FROM users
 			WHERE "email" = $1 OR "nickname" = $2`,
@@ -45,17 +43,14 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 		return users, errors.UserIsExist
 	}
 
-	database.CommitTransaction(tx)
 	return nil, nil
 }
 
+// UserGetOneHelper selects user by username from table USERS.
 func UserGetOneHelper(username string) (*models.User, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
 	user := models.User{}
 
-	err := tx.QueryRow(`
+	err := database.DB.Conn.QueryRow(`
 		SELECT "nickname", "fullname", "about", "email"
 		FROM users
 		WHERE "nickname" = $1`,
@@ -70,15 +65,12 @@ func UserGetOneHelper(username string) (*models.User, error) {
 		return nil, errors.UserNotFound
 	}
 
-	database.CommitTransaction(tx)
 	return &user, nil
 }
 
+// UserUpdateHelper updates user.
 func UserUpdateHelper(user *models.User) error {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
-	rows := tx.QueryRow(`
+	rows := database.DB.Conn.QueryRow(`
 		UPDATE users
 		SET fullname = coalesce(nullif($2, ''), fullname),
 			about    = coalesce(nullif($3, ''), about),
@@ -101,6 +93,5 @@ func UserUpdateHelper(user *models.User) error {
 		return errors.UserNotFound
 	}
 
-	database.CommitTransaction(tx)
 	return nil
 }

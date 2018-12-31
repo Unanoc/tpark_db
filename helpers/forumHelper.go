@@ -9,11 +9,9 @@ import (
 	"github.com/jackc/pgx"
 )
 
+// ForumCreateHelper inserts data in table FORUMS.
 func ForumCreateHelper(f *models.Forum) (*models.Forum, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
-	rows := tx.QueryRow(`
+	rows := database.DB.Conn.QueryRow(`
 		INSERT
 		INTO forums (slug, title, "user")
 		VALUES ($1, $2, (SELECT nickname FROM users WHERE nickname = $3)) 
@@ -36,17 +34,14 @@ func ForumCreateHelper(f *models.Forum) (*models.Forum, error) {
 		}
 	}
 
-	database.CommitTransaction(tx)
 	return f, nil
 }
 
+// ForumGetBySlug selects forum by slug.
 func ForumGetBySlug(slug string) (*models.Forum, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
 	forum := models.Forum{}
 
-	err := tx.QueryRow(`
+	err := database.DB.Conn.QueryRow(`
 		SELECT slug, title, "user", 
 			(SELECT COUNT(*) FROM posts WHERE forum = $1), 
 			(SELECT COUNT(*) FROM threads WHERE forum = $1)
@@ -63,22 +58,19 @@ func ForumGetBySlug(slug string) (*models.Forum, error) {
 		return nil, errors.ForumNotFound
 	}
 
-	database.CommitTransaction(tx)
 	return &forum, nil
 }
 
+// ForumCreateThreadHelper inserts data in table THREADS.
 func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 	if t.Slug != "" {
-		existThread, err := GetThreadBySlugOrId(t.Slug)
+		existThread, err := GetThreadBySlugOrID(t.Slug)
 		if err == nil {
 			return existThread, errors.ThreadIsExist
 		}
 	}
 
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
-	rows := tx.QueryRow(`
+	rows := database.DB.Conn.QueryRow(`
 		INSERT
 		INTO threads (author, created, message, title, slug, forum)
 		VALUES ($1, $2, $3, $4, $5, (SELECT slug FROM forums WHERE slug = $6)) 
@@ -102,20 +94,17 @@ func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 		}
 	}
 
-	database.CommitTransaction(tx)
 	return t, nil
 }
 
+// ForumGetThreadsHelper selects data from THREADS with filter.
 func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threads, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
 	var queryRows *pgx.Rows
 	var err error
 
 	if since != nil {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT author, created, forum, id, message, slug, title, votes
 				FROM threads
 				WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
@@ -123,7 +112,7 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 				LIMIT $3::TEXT::INTEGER`,
 				slug, since, limit)
 		} else {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT author, created, forum, id, message, slug, title, votes
 				FROM threads
 				WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
@@ -133,7 +122,7 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 		}
 	} else {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT author, created, forum, id, message, slug, title, votes
 				FROM threads
 				WHERE forum = $1
@@ -141,7 +130,7 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 				LIMIT $2::TEXT::INTEGER`,
 				slug, limit)
 		} else {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT author, created, forum, id, message, slug, title, votes
 				FROM threads
 				WHERE forum = $1
@@ -180,23 +169,21 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 		}
 	}
 
-	database.CommitTransaction(tx)
 	return threads, nil
 }
 
+// ForumGetUsersHelper selects users of forum from table USERS.
 func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users, error) {
 	_, err := ForumGetBySlug(slug)
 	if err != nil {
 		return nil, err
 	}
 
-	tx := database.StartTransaction()
-	defer tx.Rollback()
 	var queryRows *pgx.Rows
 
 	if since != nil {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT nickname, fullname, about, email
 				FROM users
 				WHERE nickname IN (
@@ -209,7 +196,7 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 				LIMIT $3::TEXT::INTEGER`,
 				slug, since, limit)
 		} else {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT nickname, fullname, about, email
 				FROM users
 				WHERE nickname IN (
@@ -224,7 +211,7 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 		}
 	} else {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT nickname, fullname, about, email
 				FROM users
 				WHERE nickname IN (
@@ -236,7 +223,7 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 				LIMIT $2::TEXT::INTEGER`,
 				slug, limit)
 		} else {
-			queryRows, err = tx.Query(`
+			queryRows, err = database.DB.Conn.Query(`
 				SELECT nickname, fullname, about, email
 				FROM users
 				WHERE nickname IN (
@@ -275,6 +262,5 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 		}
 	}
 
-	database.CommitTransaction(tx)
 	return &users, nil
 }

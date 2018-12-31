@@ -7,6 +7,7 @@ import (
 	"tpark_db/models"
 )
 
+// PostFullHelper selects full data about post.
 func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 	postID, err := strconv.Atoi(id)
 	if err != nil {
@@ -18,10 +19,10 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 	for _, typeObject := range related {
 		switch typeObject {
 		case "post":
-			postFull.Post, err = PostGetOneById(postID)
+			postFull.Post, err = PostGetOneByID(postID)
 		case "thread":
 			threadID := strconv.Itoa(postFull.Post.Thread)
-			postFull.Thread, err = GetThreadBySlugOrId(threadID)
+			postFull.Thread, err = GetThreadBySlugOrID(threadID)
 		case "forum":
 			forumSlug := postFull.Post.Forum
 			postFull.Forum, err = ForumGetBySlug(forumSlug)
@@ -38,14 +39,12 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 	return &postFull, nil
 }
 
-func PostGetOneById(id int) (*models.Post, error) {
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
+// PostGetOneByID selects post by id from table POSTS
+func PostGetOneByID(id int) (*models.Post, error) {
 	post := models.Post{}
 
 	sql := "SELECT id, author, \"message\", forum, thread, created, \"isEdited\" FROM posts WHERE id = $1"
-	rows := tx.QueryRow(sql,
+	rows := database.DB.Conn.QueryRow(sql,
 		id)
 
 	err := rows.Scan(
@@ -65,17 +64,17 @@ func PostGetOneById(id int) (*models.Post, error) {
 		return nil, err
 	}
 
-	database.CommitTransaction(tx)
 	return &post, nil
 }
 
+// PostUpdateHelper updates post data.
 func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Post, error) {
 	id, err := strconv.Atoi(postID)
 	if err != nil {
 		return nil, err
 	}
 
-	post, err := PostGetOneById(id)
+	post, err := PostGetOneByID(id)
 	if err != nil {
 		return nil, errors.PostNotFound
 	}
@@ -84,11 +83,8 @@ func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Pos
 		return post, nil
 	}
 
-	tx := database.StartTransaction()
-	defer tx.Rollback()
-
 	sql := "UPDATE posts SET \"message\" = COALESCE($2, \"message\"), \"isEdited\" = ($2 IS NOT NULL AND $2 <> \"message\") WHERE id = $1 RETURNING author::text, created, forum, \"isEdited\", thread, \"message\""
-	rows := tx.QueryRow(sql,
+	rows := database.DB.Conn.QueryRow(sql,
 		postID, &postUpdate.Message)
 
 	err = rows.Scan(
@@ -107,6 +103,5 @@ func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Pos
 		return nil, err
 	}
 
-	database.CommitTransaction(tx)
 	return post, nil
 }

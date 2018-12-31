@@ -61,7 +61,7 @@ func ThreadGetOneHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 
 	slugOrID := ctx.UserValue("slug_or_id").(string)
-	result, err := helpers.GetThreadBySlugOrId(slugOrID)
+	result, err := helpers.GetThreadBySlugOrID(slugOrID)
 
 	switch err {
 	case nil:
