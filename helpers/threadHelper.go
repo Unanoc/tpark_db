@@ -156,54 +156,27 @@ func GetThreadBySlugOrID(slugOrID string) (*models.Thread, error) {
 
 // ThreadVoteHelper inserts votes into table VOTES.
 func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
-	_, err := UserGetOneHelper(v.Nickname)
-	if err != nil {
-		return nil, errors.ThreadNotFound
-	}
 	foundVote, _ := CheckThreadVotesByNickname(v.Nickname)
 	thread, err := GetThreadBySlugOrID(slugOrID)
 	if err != nil {
 		return nil, err
 	}
 
-	var rows *pgx.Row
 	var editedThread models.Thread
 	var threadVoices int
 
-	if foundVote == nil { // like by user did not exist
+	if foundVote == nil {
 		_, err = database.DB.Conn.Exec(`
-			INSERT INTO votes (nickname, voice) VALUES ($1, $2)`,
+			INSERT INTO votes (nickname, voice) 
+			VALUES ((SELECT nickname FROM users WHERE nickname = $1), $2)`,
 			&v.Nickname, &v.Voice)
 
 		if err != nil {
-			return nil, err
+			return nil, errors.ThreadNotFound
 		}
 
 		threadVoices = thread.Votes + v.Voice // counting of votes
-
-		rows = database.DB.Conn.QueryRow(`
-			UPDATE threads
-			SET votes = $1
-			WHERE slug = $2
-			RETURNING id, title, author, forum, message, votes, slug, created`, &threadVoices, &thread.Slug,
-		)
-		err = rows.Scan(
-			&editedThread.Id,
-			&editedThread.Title,
-			&editedThread.Author,
-			&editedThread.Forum,
-			&editedThread.Message,
-			&editedThread.Votes,
-			&editedThread.Slug,
-			&editedThread.Created,
-		)
-
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		oldVote, _ := CheckThreadVotesByNickname(v.Nickname)
-
 		if _, err = database.DB.Conn.Exec(`
 			UPDATE votes 
 			SET voice = $2
@@ -212,29 +185,27 @@ func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
 			return nil, err
 		}
 
-		threadVoices = thread.Votes + v.Voice - oldVote.Voice // recounting of votes with old voice
+		threadVoices = thread.Votes + v.Voice - foundVote.Voice // recounting of votes with old voice
+	}
 
-		rows = database.DB.Conn.QueryRow(`
-			UPDATE threads
-			SET votes = $1
-			WHERE slug = $2
-			RETURNING id, title, author, forum, message, votes, slug, created`, &threadVoices, &thread.Slug,
-		)
+	err = database.DB.Conn.QueryRow(`
+		UPDATE threads
+		SET votes = $1
+		WHERE slug = $2
+		RETURNING id, title, author, forum, message, votes, slug, created`, &threadVoices, &thread.Slug,
+	).Scan(
+		&editedThread.Id,
+		&editedThread.Title,
+		&editedThread.Author,
+		&editedThread.Forum,
+		&editedThread.Message,
+		&editedThread.Votes,
+		&editedThread.Slug,
+		&editedThread.Created,
+	)
 
-		err = rows.Scan(
-			&editedThread.Id,
-			&editedThread.Title,
-			&editedThread.Author,
-			&editedThread.Forum,
-			&editedThread.Message,
-			&editedThread.Votes,
-			&editedThread.Slug,
-			&editedThread.Created,
-		)
-
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	return &editedThread, nil

@@ -156,6 +156,9 @@ func ThreadVoteHandler(ctx *fasthttp.RequestCtx) {
 	switch err {
 	case nil:
 		ctx.SetStatusCode(fasthttp.StatusOK) // 200
+		if result == nil {
+			ctx.SetBody([]byte("null"))
+		}
 		buf, _ := result.MarshalJSON()
 		ctx.SetBody(buf)
 	case errors.ThreadNotFound:
