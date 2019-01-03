@@ -70,15 +70,11 @@ func parentExitsInOtherThread(parent int64, threadID int) bool {
 	return true
 }
 
-func AuthorExists(author string) bool {
-	var nickname string
-	rows := database.DB.Conn.QueryRow(`
-		SELECT nickname
-		FROM users
-		WHERE nickname = $1`,
-		author)
+func authorExists(nickname string) bool {
+	var user models.User
+	rows := database.DB.Conn.QueryRow(sqlSelectUserByNickname, nickname)
 
-	if err := rows.Scan(&nickname); err != nil {
+	if err := rows.Scan(&user.Nickname, &user.Fullname, &user.About, &user.Email); err != nil {
 		if err.Error() == "no rows in result set" {
 			return true
 		}

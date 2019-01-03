@@ -21,7 +21,7 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 	created := time.Now()
 	insertedPosts := models.Posts{}
 	for _, post := range *posts {
-		if AuthorExists(post.Author) {
+		if authorExists(post.Author) {
 			return nil, errors.UserNotFound
 		}
 
