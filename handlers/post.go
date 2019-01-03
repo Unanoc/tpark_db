@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"strings"
 	"tpark_db/errors"
 	"tpark_db/helpers"
@@ -10,60 +9,40 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func PostGetOneHandler(ctx *fasthttp.RequestCtx) {
-	ctx.SetContentType("application/json")
+// PostUpdateHandler handles POST request /api/post/:id/details
+func PostUpdateHandler(ctx *fasthttp.RequestCtx) {
+	postID := ctx.UserValue("id").(string)
+	postUpdate := models.PostUpdate{}
+	if err := postUpdate.UnmarshalJSON(ctx.PostBody()); err != nil {
+		responseDefaultError(ctx, fasthttp.StatusBadRequest, err) // 400
+		return
+	}
 
+	result, err := helpers.PostUpdateHelper(&postUpdate, postID)
+	switch err {
+	case nil:
+		response(ctx, fasthttp.StatusOK, result) // 200
+	case errors.PostNotFound:
+		responseCustomError(ctx, fasthttp.StatusNotFound, errors.PostNotFound) // 404
+	default:
+		responseDefaultError(ctx, fasthttp.StatusInternalServerError, err) // 500
+	}
+}
+
+// PostGetOneHandler handles GET request /api/post/:id/details
+func PostGetOneHandler(ctx *fasthttp.RequestCtx) {
 	postID := ctx.UserValue("id").(string)
 	relatedString := ctx.FormValue("related")
 	relatedParams := []string{"post"}
 	relatedParams = append(relatedParams, strings.Split(string(relatedString), ",")...)
+
 	result, err := helpers.PostFullHelper(postID, relatedParams)
-
 	switch err {
 	case nil:
-		ctx.SetStatusCode(fasthttp.StatusOK) // 200
-		buf, _ := result.MarshalJSON()
-		ctx.SetBody(buf)
+		response(ctx, fasthttp.StatusOK, result) // 200
 	case errors.PostNotFound:
-		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
-		errorResp := errors.Error{
-			Message: fmt.Sprintf("Can't find post by id: %s", postID),
-		}
-		buf, _ := errorResp.MarshalJSON()
-		ctx.SetBody(buf)
+		responseCustomError(ctx, fasthttp.StatusNotFound, errors.PostNotFound) // 404
 	default:
-		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBodyString(err.Error())
-	}
-}
-
-func PostUpdateHandler(ctx *fasthttp.RequestCtx) {
-	ctx.SetContentType("application/json")
-
-	postID := ctx.UserValue("id").(string)
-	postUpdate := models.PostUpdate{}
-	err := postUpdate.UnmarshalJSON(ctx.PostBody())
-	if err != nil {
-		ctx.SetStatusCode(fasthttp.StatusBadRequest) // 400 Bad Request
-		ctx.SetBodyString(err.Error())
-		return
-	}
-	result, err := helpers.PostUpdateHelper(&postUpdate, postID)
-
-	switch err {
-	case nil:
-		ctx.SetStatusCode(fasthttp.StatusOK) // 200
-		buf, _ := result.MarshalJSON()
-		ctx.SetBody(buf)
-	case errors.PostNotFound:
-		ctx.SetStatusCode(fasthttp.StatusNotFound) // 404
-		errorResp := errors.Error{
-			Message: fmt.Sprintf("Can't find post by id: %s", postID),
-		}
-		buf, _ := errorResp.MarshalJSON()
-		ctx.SetBody(buf)
-	default:
-		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBodyString(err.Error())
+		responseDefaultError(ctx, fasthttp.StatusInternalServerError, err) // 500
 	}
 }
