@@ -1,4 +1,4 @@
-package service
+package handlers
 
 import (
 	"tpark_db/database"

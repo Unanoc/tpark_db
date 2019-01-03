@@ -1,4 +1,4 @@
-package thread
+package handlers
 
 import (
 	"fmt"
