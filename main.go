@@ -14,7 +14,7 @@ import (
 
 const (
 	port    = ":5000"
-	schema  = "./sql/create_tables.sql"
+	schema  = "./sql/init.sql"
 	psqlURI = "postgres://apiforum:apiforum@localhost:5432/apiforum"
 )
 
