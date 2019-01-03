@@ -32,3 +32,58 @@ func CheckThreadVotesByNickname(nickname string) (*models.Vote, error) {
 
 	return &vote, nil
 }
+
+func parentNotExists(parent int64) bool {
+	if parent == 0 {
+		return false
+	}
+
+	var t int
+	rows := database.DB.Conn.QueryRow(`
+		SELECT id
+		FROM posts
+		WHERE id = $1`,
+		parent)
+
+	if err := rows.Scan(&t); err != nil {
+		return true
+	}
+
+	return false
+}
+
+func parentExitsInOtherThread(parent int64, threadID int) bool {
+	var t int
+	rows := database.DB.Conn.QueryRow(`
+		SELECT id
+		FROM posts
+		WHERE id = $1 AND thread IN (SELECT id FROM threads WHERE thread <> $2)`,
+		parent, threadID)
+
+	if err := rows.Scan(&t); err != nil {
+		if err.Error() == "no rows in result set" {
+			return false
+		}
+		return true
+	}
+
+	return true
+}
+
+func AuthorExists(author string) bool {
+	var nickname string
+	rows := database.DB.Conn.QueryRow(`
+		SELECT nickname
+		FROM users
+		WHERE nickname = $1`,
+		author)
+
+	if err := rows.Scan(&nickname); err != nil {
+		if err.Error() == "no rows in result set" {
+			return true
+		}
+		return false
+	}
+
+	return false
+}

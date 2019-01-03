@@ -76,7 +76,7 @@ func ThreadVoteHandler(ctx *fasthttp.RequestCtx) {
 func ThreadGetOneHandler(ctx *fasthttp.RequestCtx) {
 	slugOrID := ctx.UserValue("slug_or_id").(string)
 
-	result, err := helpers.GetThreadBySlugOrID(slugOrID)
+	result, err := helpers.GetThreadBySlugOrIDHelper(slugOrID)
 	switch err {
 	case nil:
 		response(ctx, fasthttp.StatusOK, result) // 200
@@ -95,7 +95,7 @@ func ThreadGetPostsHandler(ctx *fasthttp.RequestCtx) {
 	sort := ctx.FormValue("sort")
 	desc := ctx.FormValue("desc")
 
-	result, err := helpers.ThreadGetPosts(slugOrID, limit, since, sort, desc)
+	result, err := helpers.ThreadGetPostsHelper(slugOrID, limit, since, sort, desc)
 	switch err {
 	case nil:
 		response(ctx, fasthttp.StatusOK, result) // 200

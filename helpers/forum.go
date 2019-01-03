@@ -36,7 +36,7 @@ func ForumCreateHelper(f *models.Forum) (*models.Forum, error) {
 // ForumCreateThreadHelper inserts data in table THREADS.
 func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 	if t.Slug != "" {
-		existThread, err := GetThreadBySlugOrID(t.Slug)
+		existThread, err := GetThreadBySlugOrIDHelper(t.Slug)
 		if err == nil {
 			return existThread, errors.ThreadIsExist
 		}

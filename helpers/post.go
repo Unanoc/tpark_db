@@ -59,7 +59,7 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 			postFull.Post, err = PostGetOneByIDHelper(postID)
 		case "thread":
 			threadID := strconv.Itoa(postFull.Post.Thread)
-			postFull.Thread, err = GetThreadBySlugOrID(threadID)
+			postFull.Thread, err = GetThreadBySlugOrIDHelper(threadID)
 		case "forum":
 			forumSlug := postFull.Post.Forum
 			postFull.Forum, err = ForumGetBySlugHelper(forumSlug)
