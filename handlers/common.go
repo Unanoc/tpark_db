@@ -6,7 +6,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func generateMessageJSON(responseMessage json.Marshaler) []byte {
+func toJSON(responseMessage json.Marshaler) []byte {
 	responseMessageJSON, _ := responseMessage.MarshalJSON()
 	return responseMessageJSON
 }
@@ -14,7 +14,7 @@ func generateMessageJSON(responseMessage json.Marshaler) []byte {
 func response(ctx *fasthttp.RequestCtx, status int, responseStruct json.Marshaler) {
 	ctx.SetContentType("application/json")
 	ctx.SetStatusCode(status)
-	ctx.Write(generateMessageJSON(responseStruct))
+	ctx.Write(toJSON(responseStruct))
 }
 
 func responseCustomError(ctx *fasthttp.RequestCtx, status int, err error) {
