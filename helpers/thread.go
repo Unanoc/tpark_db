@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"time"
 	"tpark_db/database"
@@ -9,6 +10,7 @@ import (
 	"tpark_db/models"
 
 	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/pgtype"
 )
 
 // ThreadCreateHelper inserts thread into table THREADS.
@@ -87,45 +89,69 @@ func ThreadUpdateHelper(thread *models.ThreadUpdate, slugOrID string) (*models.T
 	return &updatedThread, nil
 }
 
+const sqlSelectThreadAndVoteById = `
+	SELECT votes.voice, threads.id, threads.votes, u.nickname
+	FROM (SELECT 1) s
+	LEFT JOIN threads ON threads.id = $1
+	LEFT JOIN "users" u ON u.nickname = $2
+	LEFT JOIN votes ON threads.id = votes.thread AND u.nickname = votes.nickname`
+
+const sqlSelectThreadAndVoteBySlug = `
+	SELECT votes.voice, threads.id, threads.votes, u.nickname
+	FROM (SELECT 1) s
+	LEFT JOIN threads ON threads.slug = $1
+	LEFT JOIN users as u ON u.nickname = $2
+	LEFT JOIN votes ON threads.id = votes.thread AND u.nickname = votes.nickname
+`
+const sqlUpdateThreadVotes = `
+	UPDATE threads SET
+	votes = $1
+	WHERE id = $2
+	RETURNING author, created, forum, "message" , slug, title, id, votes
+`
+
 // ThreadVoteHelper inserts votes into table VOTES.
-func ThreadVoteHelper(v *models.Vote, slugOrID string) (*models.Thread, error) {
-	foundVote, _ := CheckThreadVotesByNickname(v.Nickname)
-	thread, err := GetThreadBySlugOrIDHelper(slugOrID)
-	if err != nil {
-		return nil, err
-	}
-
-	var editedThread models.Thread
-	var threadVoices int
-
-	if foundVote == nil {
-		if _, err = database.DB.Conn.Exec(sqlInsertVote, &v.Nickname, &v.Voice); err != nil {
-			return nil, errors.ThreadNotFound
-		}
-		threadVoices = thread.Votes + v.Voice // counting of votes
+func ThreadVoteHelper(slug string, id int, vote *models.Vote) *models.Thread {
+	var err error
+	prevVoice := &pgtype.Int4{}
+	threadID := &pgtype.Int4{}
+	threadVotes := &pgtype.Int4{}
+	userNickname := &pgtype.Varchar{}
+	if id != 0 {
+		err = database.DB.Conn.QueryRow(sqlSelectThreadAndVoteById, id, vote.Nickname).Scan(prevVoice, threadID, threadVotes, userNickname)
 	} else {
-		if _, err = database.DB.Conn.Exec(sqlUpdateVote, &v.Nickname, &v.Voice); err != nil {
-			return nil, err
-		}
-		threadVoices = thread.Votes + v.Voice - foundVote.Voice // recounting of votes with old voice
+		err = database.DB.Conn.QueryRow(sqlSelectThreadAndVoteBySlug, slug, vote.Nickname).Scan(prevVoice, threadID, threadVotes, userNickname)
 	}
-
-	err = database.DB.Conn.QueryRow(sqlUpdateThreadWithVote, &threadVoices, &thread.Slug).Scan(
-		&editedThread.Id,
-		&editedThread.Title,
-		&editedThread.Author,
-		&editedThread.Forum,
-		&editedThread.Message,
-		&editedThread.Votes,
-		&editedThread.Slug,
-		&editedThread.Created,
-	)
-
 	if err != nil {
-		return nil, err
+		fmt.Println("here 0", err)
+		return nil
+	}
+	if threadID.Status != pgtype.Present || userNickname.Status != pgtype.Present {
+		fmt.Println("here 1", err)
+		return nil
+	}
+	var prevVoiceInt int32
+	if prevVoice.Status == pgtype.Present {
+		prevVoiceInt = int32(prevVoice.Int)
+		_, err = database.DB.Conn.Exec(sqlUpdateVote, threadID.Int, userNickname.String, vote.Voice)
+	} else {
+		_, err = database.DB.Conn.Exec(sqlInsertVote, threadID.Int, userNickname.String, vote.Voice)
+	}
+	newVotes := threadVotes.Int + (int32(vote.Voice) - prevVoiceInt)
+	if err != nil {
+		fmt.Println("here 2", err)
+		return nil
+	}
+	thread := &models.Thread{}
+	slugNullable := &pgtype.Varchar{}
+	err = database.DB.Conn.QueryRow(sqlUpdateThreadVotes, newVotes, threadID.Int).Scan(&thread.Author, &thread.Created, &thread.Forum, &thread.Message, slugNullable, &thread.Title, &thread.Id, &thread.Votes)
+	thread.Slug = slugNullable.String
+	if err != nil {
+		fmt.Println("here 3", err)
+		return nil
 	}
 
-	return &editedThread, nil
+	return thread
 }
 
 // GetThreadBySlugOrIDHelper selects thread by id.

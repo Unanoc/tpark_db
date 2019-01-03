@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS posts (
 
 -- TABLE "votes" --
 CREATE TABLE IF NOT EXISTS votes (
+  "thread" INT NOT NULL REFERENCES threads("id"),
   "voice"    INTEGER NOT NULL,
   "nickname" CITEXT   NOT NULL
 );

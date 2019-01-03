@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strconv"
 	"tpark_db/errors"
 	"tpark_db/helpers"
 	"tpark_db/models"
@@ -52,24 +53,39 @@ func ThreadUpdateHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
+func getThreadSlugOrId(ctx *fasthttp.RequestCtx) (string, int) {
+	slug := ctx.UserValue("slug_or_id").(string)
+	id, _ := strconv.ParseInt(slug, 10, 32)
+	return slug, int(id)
+}
+
 // ThreadVoteHandler handles POST request /api/thread/:slug_or_id/vote.
 func ThreadVoteHandler(ctx *fasthttp.RequestCtx) {
-	slugOrID := ctx.UserValue("slug_or_id").(string)
-	vote := models.Vote{}
-	if err := vote.UnmarshalJSON(ctx.PostBody()); err != nil {
-		responseDefaultError(ctx, fasthttp.StatusBadRequest, err) // 400
+	// slugOrID := ctx.UserValue("slug_or_id").(string)
+	// vote := models.Vote{}
+	// if err := vote.UnmarshalJSON(ctx.PostBody()); err != nil {
+	// 	responseDefaultError(ctx, fasthttp.StatusBadRequest, err) // 400
+	// 	return
+	// }
+
+	// result, err := helpers.ThreadVoteHelper(&vote, slugOrID)
+	// switch err {
+	// case nil:
+	// 	response(ctx, fasthttp.StatusOK, result) // 200
+	// case errors.ThreadNotFound:
+	// 	responseCustomError(ctx, fasthttp.StatusNotFound, errors.ThreadNotFound) // 404
+	// default:
+	// 	responseDefaultError(ctx, fasthttp.StatusInternalServerError, err) // 500
+	// }
+	vote := &models.Vote{}
+	vote.UnmarshalJSON(ctx.PostBody())
+	slug, id := getThreadSlugOrId(ctx)
+	t := helpers.ThreadVoteHelper(slug, id, vote)
+	if t != nil {
+		response(ctx, fasthttp.StatusOK, t)
 		return
 	}
-
-	result, err := helpers.ThreadVoteHelper(&vote, slugOrID)
-	switch err {
-	case nil:
-		response(ctx, fasthttp.StatusOK, result) // 200
-	case errors.ThreadNotFound:
-		responseCustomError(ctx, fasthttp.StatusNotFound, errors.ThreadNotFound) // 404
-	default:
-		responseDefaultError(ctx, fasthttp.StatusInternalServerError, err) // 500
-	}
+	responseCustomError(ctx, fasthttp.StatusNotFound, errors.ThreadNotFound)
 }
 
 // ThreadGetOneHandler handles GET request /api/thread/:slug_or_id/details.

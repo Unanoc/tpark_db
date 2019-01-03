@@ -19,19 +19,20 @@ const sqlUpdateThread = `
 
 // ThreadVote
 const sqlInsertVote = `
-	INSERT INTO votes (nickname, voice) 
-	VALUES ((SELECT nickname FROM users WHERE nickname = $1), $2)
+	INSERT INTO votes (thread, nickname, voice) 
+	VALUES ($1, $2, $3)
 `
 const sqlUpdateVote = `
-	UPDATE votes 
-	SET voice = $2
-	WHERE nickname = $1
+	UPDATE votes SET 
+	voice = $3
+	WHERE thread = $1 
+	AND nickname = $2
 `
 const sqlUpdateThreadWithVote = `
-	UPDATE threads
-	SET votes = $1
-	WHERE slug = $2
-	RETURNING id, title, author, forum, message, votes, slug, created
+	UPDATE threads SET
+	votes = $1
+	WHERE id = $2
+	RETURNING author, created, forum, "message" , slug, title, id, votes
 `
 
 // GetThreadBySlugOrID
