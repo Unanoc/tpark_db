@@ -11,8 +11,7 @@ import (
 // ForumCreateHandler handles POST request /forum/create
 func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 	forum := models.Forum{}
-	err := forum.UnmarshalJSON(ctx.PostBody())
-	if err != nil {
+	if err := forum.UnmarshalJSON(ctx.PostBody()); err != nil {
 		responseDefaultError(ctx, fasthttp.StatusBadRequest, err) // 400
 		return
 	}
@@ -33,8 +32,7 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 // ForumCreateThreadHandler handles POST request /api/forum/:slug/create
 func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 	thread := models.Thread{}
-	err := thread.UnmarshalJSON(ctx.PostBody())
-	if err != nil {
+	if err := thread.UnmarshalJSON(ctx.PostBody()); err != nil {
 		responseDefaultError(ctx, fasthttp.StatusBadRequest, err) // 400
 		return
 	}
