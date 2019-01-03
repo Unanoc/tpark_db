@@ -9,7 +9,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// PostUpdateHandler handles POST request /api/post/:id/details
+// PostUpdateHandler handles POST request /api/post/:id/details.
 func PostUpdateHandler(ctx *fasthttp.RequestCtx) {
 	postID := ctx.UserValue("id").(string)
 	postUpdate := models.PostUpdate{}
@@ -29,7 +29,7 @@ func PostUpdateHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-// PostGetOneHandler handles GET request /api/post/:id/details
+// PostGetOneHandler handles GET request /api/post/:id/details.
 func PostGetOneHandler(ctx *fasthttp.RequestCtx) {
 	postID := ctx.UserValue("id").(string)
 	relatedString := ctx.FormValue("related")
