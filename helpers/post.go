@@ -7,6 +7,43 @@ import (
 	"tpark_db/models"
 )
 
+// PostUpdateHelper updates post data.
+func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Post, error) {
+	id, err := strconv.Atoi(postID)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := PostGetOneByIDHelper(id)
+	if err != nil {
+		return nil, errors.PostNotFound
+	}
+
+	if len(postUpdate.Message) == 0 {
+		return post, nil
+	}
+
+	rows := database.DB.Conn.QueryRow(sqlUpdatePost, postID, &postUpdate.Message)
+
+	err = rows.Scan(
+		&post.Author,
+		&post.Created,
+		&post.Forum,
+		&post.IsEdited,
+		&post.Thread,
+		&post.Message,
+	)
+
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, errors.PostNotFound
+		}
+		return nil, err
+	}
+
+	return post, nil
+}
+
 // PostFullHelper selects full data about post.
 func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 	postID, err := strconv.Atoi(id)
@@ -19,7 +56,7 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 	for _, typeObject := range related {
 		switch typeObject {
 		case "post":
-			postFull.Post, err = PostGetOneByID(postID)
+			postFull.Post, err = PostGetOneByIDHelper(postID)
 		case "thread":
 			threadID := strconv.Itoa(postFull.Post.Thread)
 			postFull.Thread, err = GetThreadBySlugOrID(threadID)
@@ -39,13 +76,11 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 	return &postFull, nil
 }
 
-// PostGetOneByID selects post by id from table POSTS
-func PostGetOneByID(id int) (*models.Post, error) {
+// PostGetOneByIDHelper selects post by id from table POSTS
+func PostGetOneByIDHelper(id int) (*models.Post, error) {
 	post := models.Post{}
 
-	sql := "SELECT id, author, \"message\", forum, thread, created, \"isEdited\" FROM posts WHERE id = $1"
-	rows := database.DB.Conn.QueryRow(sql,
-		id)
+	rows := database.DB.Conn.QueryRow(sqlSelectByID, id)
 
 	err := rows.Scan(
 		&post.Id,
@@ -65,43 +100,4 @@ func PostGetOneByID(id int) (*models.Post, error) {
 	}
 
 	return &post, nil
-}
-
-// PostUpdateHelper updates post data.
-func PostUpdateHelper(postUpdate *models.PostUpdate, postID string) (*models.Post, error) {
-	id, err := strconv.Atoi(postID)
-	if err != nil {
-		return nil, err
-	}
-
-	post, err := PostGetOneByID(id)
-	if err != nil {
-		return nil, errors.PostNotFound
-	}
-
-	if len(postUpdate.Message) == 0 {
-		return post, nil
-	}
-
-	sql := "UPDATE posts SET \"message\" = COALESCE($2, \"message\"), \"isEdited\" = ($2 IS NOT NULL AND $2 <> \"message\") WHERE id = $1 RETURNING author::text, created, forum, \"isEdited\", thread, \"message\""
-	rows := database.DB.Conn.QueryRow(sql,
-		postID, &postUpdate.Message)
-
-	err = rows.Scan(
-		&post.Author,
-		&post.Created,
-		&post.Forum,
-		&post.IsEdited,
-		&post.Thread,
-		&post.Message,
-	)
-
-	if err != nil {
-		if err.Error() == "no rows in result set" {
-			return nil, errors.PostNotFound
-		}
-		return nil, err
-	}
-
-	return post, nil
 }
