@@ -21,7 +21,7 @@ RUN /etc/init.d/postgresql start &&\
     psql --command "CREATE USER apiforum WITH SUPERUSER PASSWORD 'apiforum';" &&\
     createdb -O apiforum apiforum &&\
     psql -d apiforum -c "CREATE EXTENSION IF NOT EXISTS citext;" &&\
-    psql apiforum -a -f sql/create_tables.sql &&\
+    psql apiforum -a -f sql/init.sql &&\
     /etc/init.d/postgresql stop
     
 USER root
