@@ -67,15 +67,11 @@ func AuthorExists(author string) bool {
 	return false
 }
 
-// ThreadCreateHelper inserts thread into table THREADS
+// ThreadCreateHelper inserts thread into table THREADS.
 func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, error) {
 	threadByID, err := GetThreadBySlugOrID(slugOrID)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(*posts) == 0 {
-		return nil, errors.NoPostsForCreate
 	}
 
 	created := time.Now()
