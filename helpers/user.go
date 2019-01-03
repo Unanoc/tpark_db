@@ -10,11 +10,7 @@ import (
 
 // UserCreateHelper inserts user into table USERS.
 func UserCreateHelper(u *models.User) (models.Users, error) {
-	rows, err := database.DB.Conn.Exec(`
-		INSERT
-		INTO users ("nickname", "fullname", "about", "email")
-		VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
-		&u.Nickname, &u.Fullname, &u.About, &u.Email)
+	rows, err := database.DB.Conn.Exec(sqlInsertUser, &u.Nickname, &u.Fullname, &u.About, &u.Email)
 
 	if err != nil {
 		return nil, err
@@ -22,12 +18,7 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 
 	if rows.RowsAffected() == 0 { // if it returns 0 - user existed, else user was created
 		users := models.Users{}
-		queryRows, err := database.DB.Conn.Query(`
-			SELECT "nickname", "fullname", "about", "email"
-			FROM users
-			WHERE "email" = $1 OR "nickname" = $2`,
-			&u.Email, &u.Nickname)
-
+		queryRows, err := database.DB.Conn.Query(sqlSelectUserByEmailOrNickName, &u.Email, &u.Nickname)
 		defer queryRows.Close()
 
 		if err != nil {
@@ -36,8 +27,7 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 
 		for queryRows.Next() {
 			user := models.User{}
-			queryRows.Scan(&user.Nickname, &user.Fullname,
-				&user.About, &user.Email)
+			queryRows.Scan(&user.Nickname, &user.Fullname, &user.About, &user.Email)
 			users = append(users, &user)
 		}
 		return users, errors.UserIsExist
@@ -46,40 +36,14 @@ func UserCreateHelper(u *models.User) (models.Users, error) {
 	return nil, nil
 }
 
-// UserGetOneHelper selects user by username from table USERS.
-func UserGetOneHelper(username string) (*models.User, error) {
-	user := models.User{}
-
-	err := database.DB.Conn.QueryRow(`
-		SELECT "nickname", "fullname", "about", "email"
-		FROM users
-		WHERE "nickname" = $1`,
-		username).Scan(
+// UserUpdateHelper updates user.
+func UserUpdateHelper(user *models.User) error {
+	err := database.DB.Conn.QueryRow(sqlUpdateUser,
 		&user.Nickname,
 		&user.Fullname,
 		&user.About,
 		&user.Email,
-	)
-
-	if err != nil {
-		return nil, errors.UserNotFound
-	}
-
-	return &user, nil
-}
-
-// UserUpdateHelper updates user.
-func UserUpdateHelper(user *models.User) error {
-	rows := database.DB.Conn.QueryRow(`
-		UPDATE users
-		SET fullname = coalesce(nullif($2, ''), fullname),
-			about    = coalesce(nullif($3, ''), about),
-			email    = coalesce(nullif($4, ''), email)
-		WHERE "nickname" = $1
-		RETURNING fullname, about, email, nickname`,
-		&user.Nickname, &user.Fullname, &user.About, &user.Email)
-
-	err := rows.Scan(
+	).Scan(
 		&user.Fullname,
 		&user.About,
 		&user.Email,
@@ -94,4 +58,22 @@ func UserUpdateHelper(user *models.User) error {
 	}
 
 	return nil
+}
+
+// UserGetOneHelper selects user by username from table USERS.
+func UserGetOneHelper(nickname string) (*models.User, error) {
+	user := models.User{}
+
+	err := database.DB.Conn.QueryRow(sqlSelectUserByNickname, nickname).Scan(
+		&user.Nickname,
+		&user.Fullname,
+		&user.About,
+		&user.Email,
+	)
+
+	if err != nil {
+		return nil, errors.UserNotFound
+	}
+
+	return &user, nil
 }
