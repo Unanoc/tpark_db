@@ -8,7 +8,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// ForumCreateHandler handles POST request /forum/create
+// ForumCreateHandler handles POST request /forum/create.
 func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 	forum := models.Forum{}
 	if err := forum.UnmarshalJSON(ctx.PostBody()); err != nil {
@@ -29,7 +29,7 @@ func ForumCreateHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-// ForumCreateThreadHandler handles POST request /api/forum/:slug/create
+// ForumCreateThreadHandler handles POST request /api/forum/:slug/create.
 func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 	thread := models.Thread{}
 	if err := thread.UnmarshalJSON(ctx.PostBody()); err != nil {
@@ -53,7 +53,7 @@ func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-// ForumGetOneHandler handles GET request /api/forum/:slug/details
+// ForumGetOneHandler handles GET request /api/forum/:slug/details.
 func ForumGetOneHandler(ctx *fasthttp.RequestCtx) {
 	slug := ctx.UserValue("slug")
 
@@ -68,7 +68,7 @@ func ForumGetOneHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-// ForumGetThreadsHandler handles GET request /api/forum/:slug/threads
+// ForumGetThreadsHandler handles GET request /api/forum/:slug/threads.
 func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
 	slug := ctx.UserValue("slug").(string)
 	limit := ctx.FormValue("limit")
@@ -86,7 +86,7 @@ func ForumGetThreadsHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-// ForumGetUsersHandler handles GET request /api/forum/:slug/users
+// ForumGetUsersHandler handles GET request /api/forum/:slug/users.
 func ForumGetUsersHandler(ctx *fasthttp.RequestCtx) {
 	slug := ctx.UserValue("slug").(string)
 	limit := ctx.FormValue("limit")
