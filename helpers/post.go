@@ -25,7 +25,7 @@ func PostFullHelper(id string, related []string) (*models.PostFull, error) {
 			postFull.Thread, err = GetThreadBySlugOrID(threadID)
 		case "forum":
 			forumSlug := postFull.Post.Forum
-			postFull.Forum, err = ForumGetBySlug(forumSlug)
+			postFull.Forum, err = ForumGetBySlugHelper(forumSlug)
 		case "user":
 			userNickname := postFull.Post.Author
 			postFull.Author, err = UserGetOneHelper(userNickname)

@@ -57,7 +57,7 @@ func ForumCreateThreadHandler(ctx *fasthttp.RequestCtx) {
 func ForumGetOneHandler(ctx *fasthttp.RequestCtx) {
 	slug := ctx.UserValue("slug")
 
-	result, err := helpers.ForumGetBySlug(slug.(string))
+	result, err := helpers.ForumGetBySlugHelper(slug.(string))
 	switch err {
 	case nil:
 		response(ctx, fasthttp.StatusOK, result) // 200

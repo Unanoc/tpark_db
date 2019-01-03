@@ -11,21 +11,17 @@ import (
 
 // ForumCreateHelper inserts data in table FORUMS.
 func ForumCreateHelper(f *models.Forum) (*models.Forum, error) {
-	rows := database.DB.Conn.QueryRow(`
-		INSERT
-		INTO forums (slug, title, "user")
-		VALUES ($1, $2, (SELECT nickname FROM users WHERE nickname = $3)) 
-		RETURNING "user"`,
+	rows := database.DB.Conn.QueryRow(sqlInsertForum,
 		&f.Slug,
 		&f.Title,
-		&f.User)
+		&f.User,
+	)
 
 	err := rows.Scan(&f.User)
-
 	if err != nil {
 		switch err.(pgx.PgError).Code {
 		case "23505":
-			forum, _ := ForumGetBySlug(f.Slug)
+			forum, _ := ForumGetBySlugHelper(f.Slug)
 			return forum, errors.ForumIsExist
 		case "23502":
 			return nil, errors.UserNotFound
@@ -37,30 +33,6 @@ func ForumCreateHelper(f *models.Forum) (*models.Forum, error) {
 	return f, nil
 }
 
-// ForumGetBySlug selects forum by slug.
-func ForumGetBySlug(slug string) (*models.Forum, error) {
-	forum := models.Forum{}
-
-	err := database.DB.Conn.QueryRow(`
-		SELECT slug, title, "user", 
-			(SELECT COUNT(*) FROM posts WHERE forum = $1), 
-			(SELECT COUNT(*) FROM threads WHERE forum = $1)
-		FROM forums
-		WHERE slug = $1`,
-		slug).Scan(
-		&forum.Slug,
-		&forum.Title,
-		&forum.User,
-		&forum.Posts,
-		&forum.Threads)
-
-	if err != nil {
-		return nil, errors.ForumNotFound
-	}
-
-	return &forum, nil
-}
-
 // ForumCreateThreadHelper inserts data in table THREADS.
 func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 	if t.Slug != "" {
@@ -70,24 +42,27 @@ func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 		}
 	}
 
-	rows := database.DB.Conn.QueryRow(`
-		INSERT
-		INTO threads (author, created, message, title, slug, forum)
-		VALUES ($1, $2, $3, $4, $5, (SELECT slug FROM forums WHERE slug = $6)) 
-		RETURNING author, created, forum, id, message, title`,
+	err := database.DB.Conn.QueryRow(sqlInsertThread,
 		&t.Author,
 		&t.Created,
 		&t.Message,
 		&t.Title,
 		&t.Slug,
-		&t.Forum)
+		&t.Forum,
+	).Scan(
+		&t.Author,
+		&t.Created,
+		&t.Forum,
+		&t.Id,
+		&t.Message,
+		&t.Title,
+	)
 
-	err := rows.Scan(&t.Author, &t.Created, &t.Forum, &t.Id, &t.Message, &t.Title)
 	if err != nil {
 		switch err.(pgx.PgError).Code {
-		case "23503":
-			return nil, errors.ForumOrAuthorNotFound
 		case "23502":
+			return nil, errors.ForumOrAuthorNotFound
+		case "23503":
 			return nil, errors.ForumOrAuthorNotFound
 		default:
 			return nil, err
@@ -97,6 +72,27 @@ func ForumCreateThreadHelper(t *models.Thread) (*models.Thread, error) {
 	return t, nil
 }
 
+// ForumGetBySlugHelper selects forum by slug.
+func ForumGetBySlugHelper(slug string) (*models.Forum, error) {
+	forum := models.Forum{}
+
+	err := database.DB.Conn.QueryRow(sqlSelectForumBySlug,
+		slug,
+	).Scan(
+		&forum.Slug,
+		&forum.Title,
+		&forum.User,
+		&forum.Posts,
+		&forum.Threads,
+	)
+
+	if err != nil {
+		return nil, errors.ForumNotFound
+	}
+
+	return &forum, nil
+}
+
 // ForumGetThreadsHelper selects data from THREADS with filter.
 func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threads, error) {
 	var queryRows *pgx.Rows
@@ -104,39 +100,15 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 
 	if since != nil {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT author, created, forum, id, message, slug, title, votes
-				FROM threads
-				WHERE forum = $1 AND created <= $2::TEXT::TIMESTAMPTZ
-				ORDER BY created DESC
-				LIMIT $3::TEXT::INTEGER`,
-				slug, since, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectThreadsSinceDescLimit, slug, since, limit)
 		} else {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT author, created, forum, id, message, slug, title, votes
-				FROM threads
-				WHERE forum = $1 AND created >= $2::TEXT::TIMESTAMPTZ
-				ORDER BY created
-				LIMIT $3::TEXT::INTEGER`,
-				slug, since, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectThreadsSinceAscLimit, slug, since, limit)
 		}
 	} else {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT author, created, forum, id, message, slug, title, votes
-				FROM threads
-				WHERE forum = $1
-				ORDER BY created DESC
-				LIMIT $2::TEXT::INTEGER`,
-				slug, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectThreadDescLimit, slug, limit)
 		} else {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT author, created, forum, id, message, slug, title, votes
-				FROM threads
-				WHERE forum = $1
-				ORDER BY created
-				LIMIT $2::TEXT::INTEGER`,
-				slug, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectThreadAscLimit, slug, limit)
 		}
 	}
 	defer queryRows.Close()
@@ -148,7 +120,6 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 	threads := models.Threads{}
 	for queryRows.Next() {
 		thread := models.Thread{}
-
 		_ = queryRows.Scan(
 			&thread.Author,
 			&thread.Created,
@@ -157,13 +128,14 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 			&thread.Message,
 			&thread.Slug,
 			&thread.Title,
-			&thread.Votes)
+			&thread.Votes,
+		)
 
 		threads = append(threads, &thread)
 	}
 
 	if len(threads) == 0 {
-		_, err := ForumGetBySlug(slug)
+		_, err := ForumGetBySlugHelper(slug)
 		if err != nil {
 			return nil, errors.ForumNotFound
 		}
@@ -174,7 +146,7 @@ func ForumGetThreadsHelper(slug string, limit, since, desc []byte) (models.Threa
 
 // ForumGetUsersHelper selects users of forum from table USERS.
 func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users, error) {
-	_, err := ForumGetBySlug(slug)
+	_, err := ForumGetBySlugHelper(slug)
 	if err != nil {
 		return nil, err
 	}
@@ -183,57 +155,15 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 
 	if since != nil {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT nickname, fullname, about, email
-				FROM users
-				WHERE nickname IN (
-						SELECT author FROM threads WHERE forum = $1
-						UNION
-						SELECT author FROM posts WHERE forum = $1
-					) 
-					AND LOWER(nickname) < LOWER($2::TEXT)
-				ORDER BY nickname DESC
-				LIMIT $3::TEXT::INTEGER`,
-				slug, since, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectUsersDescSinceLimit, slug, since, limit)
 		} else {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT nickname, fullname, about, email
-				FROM users
-				WHERE nickname IN (
-						SELECT author FROM threads WHERE forum = $1
-						UNION
-						SELECT author FROM posts WHERE forum = $1
-					)  
-					AND LOWER(nickname) > LOWER($2::TEXT)
-				ORDER BY nickname
-				LIMIT $3::TEXT::INTEGER`,
-				slug, since, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectUsersAscSinceLimit, slug, since, limit)
 		}
 	} else {
 		if bytes.Equal([]byte("true"), desc) {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT nickname, fullname, about, email
-				FROM users
-				WHERE nickname IN (
-						SELECT author FROM threads WHERE forum = $1
-						UNION
-						SELECT author FROM posts WHERE forum = $1
-					) 
-				ORDER BY nickname DESC
-				LIMIT $2::TEXT::INTEGER`,
-				slug, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectUsersDescLimit, slug, limit)
 		} else {
-			queryRows, err = database.DB.Conn.Query(`
-				SELECT nickname, fullname, about, email
-				FROM users
-				WHERE nickname IN (
-						SELECT author FROM threads WHERE forum = $1
-						UNION
-						SELECT author FROM posts WHERE forum = $1
-					) 
-				ORDER BY nickname
-				LIMIT $2::TEXT::INTEGER`,
-				slug, limit)
+			queryRows, err = database.DB.Conn.Query(sqlSelectUsersAscLimit, slug, limit)
 		}
 	}
 	defer queryRows.Close()
@@ -245,7 +175,6 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 	users := models.Users{}
 	for queryRows.Next() {
 		user := models.User{}
-
 		err = queryRows.Scan(
 			&user.Nickname,
 			&user.Fullname,
@@ -256,7 +185,7 @@ func ForumGetUsersHelper(slug string, limit, since, desc []byte) (*models.Users,
 	}
 
 	if len(users) == 0 {
-		_, err := ForumGetBySlug(slug)
+		_, err := ForumGetBySlugHelper(slug)
 		if err != nil {
 			return nil, errors.UserNotFound
 		}
