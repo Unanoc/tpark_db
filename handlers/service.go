@@ -1,31 +1,19 @@
 package handlers
 
 import (
-	"tpark_db/database"
+	"tpark_db/errors"
 	"tpark_db/helpers"
 
 	"github.com/valyala/fasthttp"
 )
 
+// ClearHandler handles POST request /api/service/clear.
 func ClearHandler(ctx *fasthttp.RequestCtx) {
-	ctx.SetContentType("application/json")
-	if err := helpers.ExecSQLScript(database.DB.SchemaPath); err != nil {
-		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBodyString(err.Error())
-	} else {
-		ctx.SetStatusCode(fasthttp.StatusOK) // 200
-		ctx.SetBodyString("null")
-	}
+	helpers.ClearHelper()
+	responseCustomError(ctx, fasthttp.StatusOK, errors.New("null"))
 }
 
+// StatusHandler handles GET request /api/service/status.
 func StatusHandler(ctx *fasthttp.RequestCtx) {
-	ctx.SetContentType("application/json")
-	if status, err := helpers.StatusHelper(); err != nil {
-		ctx.SetStatusCode(fasthttp.StatusInternalServerError) // 500
-		ctx.SetBodyString(err.Error())
-	} else {
-		ctx.SetStatusCode(fasthttp.StatusOK) // 200
-		buf, _ := status.MarshalJSON()
-		ctx.SetBody(buf)
-	}
+	response(ctx, fasthttp.StatusOK, helpers.StatusHelper())
 }
