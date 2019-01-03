@@ -14,17 +14,6 @@ var (
 	UsersCount   *int32
 )
 
-const (
-	sqlClearTables = `
-	TRUNCATE users, forums, threads, posts, votes;`
-	sqlCountOfTables = `
-	SELECT *
-	FROM (SELECT COUNT(*) FROM "users") as "users"
-	CROSS JOIN (SELECT COUNT(*) FROM "threads") as threads
-	CROSS JOIN (SELECT COUNT(*) FROM "forums") as forums
-	CROSS JOIN (SELECT COUNT(*) FROM "posts") as posts`
-)
-
 func init() {
 	ForumsCount = new(int32)
 	PostsCount = new(int32)
@@ -41,13 +30,13 @@ func resetTablesCount() {
 
 // ClearHelper erases all tables.
 func ClearHelper() {
-	database.DB.Conn.Exec(sqlClearTables)
+	database.DB.Conn.Exec(sqlTruncateTables)
 	resetTablesCount()
 }
 
 // StatusHelper returns rows counts of tables.
 func StatusHelper() *models.Status {
-	database.DB.Conn.QueryRow(sqlCountOfTables).Scan(UsersCount, ThreadsCount, ForumsCount, PostsCount)
+	database.DB.Conn.QueryRow(sqlSelectCountOfTables).Scan(UsersCount, ThreadsCount, ForumsCount, PostsCount)
 	currentStatus := &models.Status{
 		Thread: atomic.LoadInt32(ThreadsCount),
 		Post:   atomic.LoadInt32(PostsCount),
