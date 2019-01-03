@@ -8,6 +8,7 @@ type DataBase struct {
 	SchemaPath string
 }
 
+// DB is the global instance of DataBase structure.
 var DB DataBase
 
 // Connect creates a connection with db.
