@@ -64,7 +64,6 @@ func parentExitsInOtherThread(parent int64, threadID int) bool {
 		if err.Error() == "no rows in result set" {
 			return false
 		}
-		return true
 	}
 
 	return true
@@ -78,7 +77,6 @@ func authorExists(nickname string) bool {
 		if err.Error() == "no rows in result set" {
 			return true
 		}
-		return false
 	}
 
 	return false

@@ -64,18 +64,18 @@ CREATE TABLE IF NOT EXISTS votes (
 CREATE INDEX IF NOT EXISTS index_on_users_nickname
   ON users ("nickname");
 
--- INDEX on forums "nickname"
-CREATE INDEX IF NOT EXISTS index_on_forums_slug
-  ON forums ("slug");
+-- -- INDEX on forums "nickname"
+-- CREATE INDEX IF NOT EXISTS index_on_forums_slug
+--   ON forums ("slug");
 
--- INDEX on threads "slug"
-CREATE INDEX IF NOT EXISTS index_on_threads_slug
-  ON threads ("slug");
+-- -- INDEX on threads "slug"
+-- CREATE INDEX IF NOT EXISTS index_on_threads_slug
+--   ON threads ("slug");
 
--- INDEX on threads "id"
-CREATE INDEX IF NOT EXISTS index_on_threads_id
-  ON threads ("id");
+-- -- INDEX on threads "id"
+-- CREATE INDEX IF NOT EXISTS index_on_threads_id
+--   ON threads ("id");
 
--- INDEX on posts "id"
-CREATE INDEX IF NOT EXISTS index_on_posts_id
-ON posts ("id");
+-- -- INDEX on posts "id"
+-- CREATE INDEX IF NOT EXISTS index_on_posts_id
+-- ON posts ("id");

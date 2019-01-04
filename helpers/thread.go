@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/pgtype"
 )
 
-// ThreadCreateHelper inserts thread into table THREADS.
+// ThreadCreateHelper inserts post into table Posts.
 func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, error) {
 	threadByID, err := GetThreadBySlugOrIDHelper(slugOrID)
 	if err != nil {
