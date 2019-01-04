@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"time"
 	"tpark_db/database"
@@ -89,45 +88,24 @@ func ThreadUpdateHelper(thread *models.ThreadUpdate, slugOrID string) (*models.T
 	return &updatedThread, nil
 }
 
-const sqlSelectThreadAndVoteById = `
-	SELECT votes.voice, threads.id, threads.votes, u.nickname
-	FROM (SELECT 1) s
-	LEFT JOIN threads ON threads.id = $1
-	LEFT JOIN "users" u ON u.nickname = $2
-	LEFT JOIN votes ON threads.id = votes.thread AND u.nickname = votes.nickname`
-
-const sqlSelectThreadAndVoteBySlug = `
-	SELECT votes.voice, threads.id, threads.votes, u.nickname
-	FROM (SELECT 1) s
-	LEFT JOIN threads ON threads.slug = $1
-	LEFT JOIN users as u ON u.nickname = $2
-	LEFT JOIN votes ON threads.id = votes.thread AND u.nickname = votes.nickname
-`
-const sqlUpdateThreadVotes = `
-	UPDATE threads SET
-	votes = $1
-	WHERE id = $2
-	RETURNING author, created, forum, "message" , slug, title, id, votes
-`
-
 // ThreadVoteHelper inserts votes into table VOTES.
-func ThreadVoteHelper(slug string, id int, vote *models.Vote) *models.Thread {
+func ThreadVoteHelper(vote *models.Vote, slugOrID string) *models.Thread {
 	var err error
 	prevVoice := &pgtype.Int4{}
 	threadID := &pgtype.Int4{}
 	threadVotes := &pgtype.Int4{}
 	userNickname := &pgtype.Varchar{}
-	if id != 0 {
-		err = database.DB.Conn.QueryRow(sqlSelectThreadAndVoteById, id, vote.Nickname).Scan(prevVoice, threadID, threadVotes, userNickname)
+
+	if IsNumber(slugOrID) {
+		id, _ := strconv.Atoi(slugOrID)
+		err = database.DB.Conn.QueryRow(sqlSelectThreadAndVoteByID, id, vote.Nickname).Scan(prevVoice, threadID, threadVotes, userNickname)
 	} else {
-		err = database.DB.Conn.QueryRow(sqlSelectThreadAndVoteBySlug, slug, vote.Nickname).Scan(prevVoice, threadID, threadVotes, userNickname)
+		err = database.DB.Conn.QueryRow(sqlSelectThreadAndVoteBySlug, slugOrID, vote.Nickname).Scan(prevVoice, threadID, threadVotes, userNickname)
 	}
 	if err != nil {
-		fmt.Println("here 0", err)
 		return nil
 	}
 	if threadID.Status != pgtype.Present || userNickname.Status != pgtype.Present {
-		fmt.Println("here 1", err)
 		return nil
 	}
 	var prevVoiceInt int32
@@ -139,7 +117,6 @@ func ThreadVoteHelper(slug string, id int, vote *models.Vote) *models.Thread {
 	}
 	newVotes := threadVotes.Int + (int32(vote.Voice) - prevVoiceInt)
 	if err != nil {
-		fmt.Println("here 2", err)
 		return nil
 	}
 	thread := &models.Thread{}
@@ -147,7 +124,6 @@ func ThreadVoteHelper(slug string, id int, vote *models.Vote) *models.Thread {
 	err = database.DB.Conn.QueryRow(sqlUpdateThreadVotes, newVotes, threadID.Int).Scan(&thread.Author, &thread.Created, &thread.Forum, &thread.Message, slugNullable, &thread.Title, &thread.Id, &thread.Votes)
 	thread.Slug = slugNullable.String
 	if err != nil {
-		fmt.Println("here 3", err)
 		return nil
 	}
 

@@ -28,7 +28,21 @@ const sqlUpdateVote = `
 	WHERE thread = $1 
 	AND nickname = $2
 `
-const sqlUpdateThreadWithVote = `
+const sqlSelectThreadAndVoteByID = `
+	SELECT votes.voice, threads.id, threads.votes, u.nickname
+	FROM (SELECT 1) s
+	LEFT JOIN threads ON threads.id = $1
+	LEFT JOIN "users" u ON u.nickname = $2
+	LEFT JOIN votes ON threads.id = votes.thread AND u.nickname = votes.nickname`
+
+const sqlSelectThreadAndVoteBySlug = `
+	SELECT votes.voice, threads.id, threads.votes, u.nickname
+	FROM (SELECT 1) s
+	LEFT JOIN threads ON threads.slug = $1
+	LEFT JOIN users as u ON u.nickname = $2
+	LEFT JOIN votes ON threads.id = votes.thread AND u.nickname = votes.nickname
+`
+const sqlUpdateThreadVotes = `
 	UPDATE threads SET
 	votes = $1
 	WHERE id = $2
