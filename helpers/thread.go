@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"time"
 	"tpark_db/database"
@@ -12,33 +13,46 @@ import (
 	"github.com/jackc/pgx/pgtype"
 )
 
-// ThreadCreateHelper inserts post into table Posts.
+// ThreadCreateHelper inserts posts into table Posts.
 func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, error) {
 	threadByID, err := GetThreadBySlugOrIDHelper(slugOrID)
 	if err != nil {
 		return nil, err
 	}
 
-	created := time.Now()
-	insertedPosts := models.Posts{}
-	for _, post := range *posts {
+	if len(*posts) == 0 {
+		return posts, nil
+	}
+
+	created := time.Now().Format("2006-01-02 15:04:05")
+
+	var sqlInsertPosts = "INSERT INTO posts (author, created, message, thread, parent, forum, path) VALUES "
+	valueTemplate := "('%s', '%s', '%s', %d, %d, '%s', (SELECT path FROM posts WHERE id = %d) || (select currval(pg_get_serial_sequence('posts', 'id'))))%s"
+
+	for i, post := range *posts {
 		if authorExists(post.Author) {
 			return nil, errors.UserNotFound
 		}
-
 		if parentExitsInOtherThread(post.Parent, threadByID.Id) || parentNotExists(post.Parent) {
 			return nil, errors.PostParentNotFound
 		}
 
+		if i < len(*posts)-1 {
+			sqlInsertPosts += fmt.Sprintf(valueTemplate, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, ",")
+		} else {
+			sqlInsertPosts += fmt.Sprintf(valueTemplate, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, "")
+		}
+	}
+
+	queryRows, _ := database.DB.Conn.Query(sqlInsertPosts + "RETURNING author, created, forum, id, message, parent, thread")
+	if err != nil {
+		return nil, err
+	}
+
+	insertedPosts := models.Posts{}
+	for queryRows.Next() {
 		insertedPost := models.Post{}
-		err := database.DB.Conn.QueryRow(sqlInsertPost,
-			post.Author,
-			created,
-			post.Message,
-			threadByID.Id,
-			post.Parent,
-			threadByID.Forum,
-		).Scan(
+		_ = queryRows.Scan(
 			&insertedPost.Author,
 			&insertedPost.Created,
 			&insertedPost.Forum,
@@ -48,12 +62,8 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 			&insertedPost.Thread,
 		)
 
-		if err != nil {
-			return nil, err
-		}
 		insertedPosts = append(insertedPosts, &insertedPost)
 	}
-
 	return &insertedPosts, nil
 }
 
