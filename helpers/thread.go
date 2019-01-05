@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"tpark_db/database"
 	"tpark_db/errors"
@@ -26,26 +27,34 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 
 	created := time.Now().Format("2006-01-02 15:04:05")
 
+	queryBuilder := strings.Builder{}
 	var beginOfSQLInsertPosts = "INSERT INTO posts (author, created, message, thread, parent, forum, path) VALUES "
 	var midOfSQLInsertPosts = "('%s', '%s', '%s', %d, %d, '%s', (SELECT path FROM posts WHERE id = %d) || (select currval(pg_get_serial_sequence('posts', 'id'))))%s"
 	var endOfSQLInsertPosts = "RETURNING author, created, forum, id, message, parent, thread"
 
+	queryBuilder.WriteString(beginOfSQLInsertPosts)
 	for i, post := range *posts {
-		if authorExists(post.Author) {
+		if err := authorExists(post.Author); err != nil {
 			return nil, errors.UserNotFound
 		}
-		if parentExitsInOtherThread(post.Parent, threadByID.Id) || parentNotExists(post.Parent) {
-			return nil, errors.PostParentNotFound
+
+		if err := parentExitsInOtherThread(post.Parent, threadByID.Id); err != nil {
+			return nil, err
+		}
+
+		if err = parentNotExists(post.Parent); err != nil {
+			return nil, err
 		}
 
 		if i < len(*posts)-1 {
-			beginOfSQLInsertPosts += fmt.Sprintf(midOfSQLInsertPosts, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, ",")
+			queryBuilder.WriteString(fmt.Sprintf(midOfSQLInsertPosts, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, ","))
 		} else {
-			beginOfSQLInsertPosts += fmt.Sprintf(midOfSQLInsertPosts, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, "")
+			queryBuilder.WriteString(fmt.Sprintf(midOfSQLInsertPosts, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, ""))
 		}
 	}
 
-	queryRows, err := database.DB.Conn.Query(beginOfSQLInsertPosts + endOfSQLInsertPosts)
+	queryBuilder.WriteString(endOfSQLInsertPosts)
+	queryRows, err := database.DB.Conn.Query(queryBuilder.String())
 	if err != nil {
 		return nil, err
 	}
