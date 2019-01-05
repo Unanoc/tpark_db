@@ -1,12 +1,12 @@
 package helpers
 
 // ThreadCreate
-const sqlInsertPostPattern = `
-	INSERT
-	INTO posts (author, created, message, thread, parent, forum, path)
-	VALUES ($1, $2, $3, $4, $5, $6, (SELECT path FROM posts WHERE id = $5) || (select currval(pg_get_serial_sequence('posts', 'id'))) )
-	RETURNING author, created, forum, id, message, parent, thread
-`
+// const sqlInsertPostPattern = `
+// 	INSERT
+// 	INTO posts (author, created, message, thread, parent, forum, path)
+// 	VALUES ($1, $2, $3, $4, $5, $6, (SELECT path FROM posts WHERE id = $5) || (select currval(pg_get_serial_sequence('posts', 'id'))) )
+// 	RETURNING author, created, forum, id, message, parent, thread
+// `
 
 // ThreadUpdate
 const sqlUpdateThread = `

@@ -26,8 +26,9 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 
 	created := time.Now().Format("2006-01-02 15:04:05")
 
-	var sqlInsertPosts = "INSERT INTO posts (author, created, message, thread, parent, forum, path) VALUES "
-	valueTemplate := "('%s', '%s', '%s', %d, %d, '%s', (SELECT path FROM posts WHERE id = %d) || (select currval(pg_get_serial_sequence('posts', 'id'))))%s"
+	var beginOfSQLInsertPosts = "INSERT INTO posts (author, created, message, thread, parent, forum, path) VALUES "
+	var midOfSQLInsertPosts = "('%s', '%s', '%s', %d, %d, '%s', (SELECT path FROM posts WHERE id = %d) || (select currval(pg_get_serial_sequence('posts', 'id'))))%s"
+	var endOfSQLInsertPosts = "RETURNING author, created, forum, id, message, parent, thread"
 
 	for i, post := range *posts {
 		if authorExists(post.Author) {
@@ -38,13 +39,13 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 		}
 
 		if i < len(*posts)-1 {
-			sqlInsertPosts += fmt.Sprintf(valueTemplate, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, ",")
+			beginOfSQLInsertPosts += fmt.Sprintf(midOfSQLInsertPosts, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, ",")
 		} else {
-			sqlInsertPosts += fmt.Sprintf(valueTemplate, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, "")
+			beginOfSQLInsertPosts += fmt.Sprintf(midOfSQLInsertPosts, post.Author, created, post.Message, threadByID.Id, post.Parent, threadByID.Forum, post.Parent, "")
 		}
 	}
 
-	queryRows, err := database.DB.Conn.Query(sqlInsertPosts + "RETURNING author, created, forum, id, message, parent, thread")
+	queryRows, err := database.DB.Conn.Query(beginOfSQLInsertPosts + endOfSQLInsertPosts)
 	if err != nil {
 		return nil, err
 	}
