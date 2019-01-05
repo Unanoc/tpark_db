@@ -44,7 +44,7 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 		}
 	}
 
-	queryRows, _ := database.DB.Conn.Query(sqlInsertPosts + "RETURNING author, created, forum, id, message, parent, thread")
+	queryRows, err := database.DB.Conn.Query(sqlInsertPosts + "RETURNING author, created, forum, id, message, parent, thread")
 	if err != nil {
 		return nil, err
 	}
