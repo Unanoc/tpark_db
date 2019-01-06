@@ -2,11 +2,8 @@ package helpers
 
 import (
 	"tpark_db/database"
-	"tpark_db/errors"
 	"tpark_db/models"
 	"unicode"
-
-	"github.com/jackc/pgx"
 )
 
 // IsNumber checks if string is number.
@@ -36,9 +33,9 @@ func CheckThreadVotesByNickname(nickname string) (*models.Vote, error) {
 	return &vote, nil
 }
 
-func parentNotExists(parent int64) error {
+func parentNotExists(parent int64) bool {
 	if parent == 0 {
-		return nil
+		return false
 	}
 
 	var t int
@@ -49,15 +46,13 @@ func parentNotExists(parent int64) error {
 		parent)
 
 	if err := rows.Scan(&t); err != nil {
-		if err == pgx.ErrNoRows {
-			return errors.PostParentNotFound
-		}
+		return true
 	}
 
-	return nil
+	return false
 }
 
-func parentExitsInOtherThread(parent int64, threadID int) error {
+func parentExitsInOtherThread(parent int64, threadID int) bool {
 	var t int
 	rows := database.DB.Conn.QueryRow(`
 		SELECT id
@@ -66,23 +61,23 @@ func parentExitsInOtherThread(parent int64, threadID int) error {
 		parent, threadID)
 
 	if err := rows.Scan(&t); err != nil {
-		if err == pgx.ErrNoRows {
-			return nil
+		if err.Error() == "no rows in result set" {
+			return false
 		}
 	}
 
-	return errors.PostParentNotFound
+	return true
 }
 
-func authorExists(nickname string) error {
+func authorExists(nickname string) bool {
 	var user models.User
 	rows := database.DB.Conn.QueryRow(sqlSelectUserByNickname, nickname)
 
 	if err := rows.Scan(&user.Nickname, &user.Fullname, &user.About, &user.Email); err != nil {
-		if err == pgx.ErrNoRows {
-			return errors.UserNotFound
+		if err.Error() == "no rows in result set" {
+			return true
 		}
 	}
 
-	return nil
+	return false
 }

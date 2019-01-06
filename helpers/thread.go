@@ -34,16 +34,11 @@ func ThreadCreateHelper(posts *models.Posts, slugOrID string) (*models.Posts, er
 
 	queryBuilder.WriteString(beginOfSQLInsertPosts)
 	for i, post := range *posts {
-		if err := authorExists(post.Author); err != nil {
+		if authorExists(post.Author) {
 			return nil, errors.UserNotFound
 		}
-
-		if err := parentExitsInOtherThread(post.Parent, threadByID.Id); err != nil {
-			return nil, err
-		}
-
-		if err = parentNotExists(post.Parent); err != nil {
-			return nil, err
+		if parentExitsInOtherThread(post.Parent, threadByID.Id) || parentNotExists(post.Parent) {
+			return nil, errors.PostParentNotFound
 		}
 
 		if i < len(*posts)-1 {
