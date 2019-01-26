@@ -1,5 +1,5 @@
 # tpark_db
-Technopark@MailRu. Data Base Course. RESTful API for forum.
+Technopark@MailRu. Data Base Course. REST API for forum.
 
 Тестовое задание для реализации проекта "Форумы" на курсе по базам данных в Технопарке Mail.ru (https://park.mail.ru).
 
