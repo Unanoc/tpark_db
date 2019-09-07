@@ -1,58 +1,37 @@
 # Forum API 
-Тестовое задание для реализации проекта "Форумы" на курсе по базам данных в Технопарке Mail.ru (https://park.mail.ru).
+Main project for Database course at Technopark Mail.ru (https://park.mail.ru).
 
-Суть задания заключается в реализации API к базе данных проекта «Форумы» по документации к этому API.
+# API Documentation
+https://tech-db-forum.bozaro.ru/
 
-Таким образом, на входе:
+## Functional testing
+The functionality of the API will be verified by automated functional testing.
 
- * документация к API;
+Testing method:
 
-На выходе:
+* Docker container is collected from storage;
+* Docker container is running;
+* Go runs a script that will conduct testing;
+* Docker container stops.
 
- * репозиторий, содержащий все необходимое для разворачивания сервиса в Docker-контейнере.
-
-Документацию можно читать как собственно в файле swagger.yml, так и через Swagger UI (там же есть возможность поиграться с запросами): https://tech-db-forum.bozaro.ru/
-
-## Требования к проекту
-Проект должен включать в себя все необходимое для разворачивания сервиса в Docker-контейнере.
-
-При этом:
-
- * файл для сборки Docker-контейнера должен называться Dockerfile и располагаться в корне репозитория;
- * реализуемое API должно быть доступно на 5000-ом порту по протоколу http;
- * допускается использовать любой язык программирования;
- * крайне не рекомендуется использовать ORM.
-
-## Функциональное тестирование
-Корректность API будет проверяться при помощи автоматического функционального тестирования.
-
-Методика тестирования:
-
- * собирается Docker-контейнер из репозитория;
- * запускается Docker-контейнер;
- * запускается скрипт на Go, который будет проводить тестирование;
- * останавливается Docker-контейнер.
-
-Для локальной сборки Go-скрипта достаточно выполнить команду:
+To create a Go script locally, simply run the command:
 ```
 go get -u -v github.com/bozaro/tech-db-forum
 go build github.com/bozaro/tech-db-forum
 ```
-После этого в текущем каталоге будет создан исполняемый файл `tech-db-forum`.
+After that, the executable file `tech-db-forum` will be created in the current directory.
 
-### Запуск функционального тестирования
+### Launch functional testing
 
-Для запуска функционального тестирования нужно выполнить команду вида:
+To start functional testing, you need to run the following command:
 ```
 ./tech-db-forum func -u http://localhost:5000/api -r report.html
 ```
 
-Поддерживаются следующие параметры:
-
-Параметр                              | Описание
+Parametr                              | Description
 ---                                   | ---
--h, --help                            | Вывод списка поддерживаемых параметров
--u, --url[=http://localhost:5000/api] | Указание базовой URL тестируемого приложения
--k, --keep                            | Продолжить тестирование после первого упавшего теста
--t, --tests[=.*]                      | Маска запускаемых тестов (регулярное выражение)
--r, --report[=report.html]            | Имя файла для детального отчета о функциональном тестировании
+-h, --help                            | List of parameters
+-u, --url[=http://localhost:5000/api] | URL of the application
+-k, --keep                            | Continue testing after the first failed test
+-t, --tests[=.*]                      | Mask of run tests (regular expression)
+-r, --report[=report.html]            | File Name for Detailed Functional Test Report
